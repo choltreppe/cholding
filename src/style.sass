@@ -1,0 +1,451 @@
+//
+//    CholChording - A chorded keyboard layout configurator and typing trainer
+//        (c) Copyright 2024 Joel Lienhard (choltreppe)
+//
+//    See the file "LICENSE.txt", included in this
+//    distribution, for details about the copyright.
+//
+  
+$color-head: #353535
+$color-head-variant: #444444
+$color-ground: #22262a
+$color-element-subtle: #303841
+$color-element-strong: #4f565e
+$color-highlight: #b8bbbe
+$color-on-ground: #e5e5e4
+
+$font: Fira Sans, Arial
+$font-size-big: 2.1vmin
+$font-size-medium: 1.9vmin
+$font-size-small: 1.6vmin
+
+$head-height: 5vmin
+
+$key-size: 6vmin
+
+
+html
+  font-family: $font
+  font-size: $font-size-medium
+  color: $color-on-ground
+
+body
+  margin: 0
+
+
+// -------- base -----------
+
+#ROOT
+  background-color: $color-ground
+  display: flex
+  flex-direction: column
+  align-items: stretch
+  height: 100vh
+  margin: 0
+  padding: 0
+
+#head
+  height: $head-height
+  display: flex
+  flex-direction: row
+  align-items: stretch
+  background-color: $color-head
+  $border: solid 1px $color-head-variant
+  border-bottom: $border
+
+  #logo
+    padding: 0 ($head-height*0.6)
+    background-color: $color-head-variant
+    font-size: $font-size-big
+    text-transform: uppercase
+    font-weight: bold
+    display: flex
+    align-items: center
+
+  #main-tabs
+    flex: 1 1
+    display: flex
+    flex-direction: row
+    align-items: flex-end
+    margin: 0 ($head-height*0.4)
+    
+    $vert-padding: ($head-height - $font-size-big) / 3
+
+    > div
+      margin: 0 $vert-padding
+
+    > :not(.selected), > .selected > .center
+      font-size: $font-size-medium
+      padding: $vert-padding ($head-height*0.4)
+
+    > :not(.selected)
+      font-weight: 200
+      &:hover
+        cursor: pointer
+    
+    > .selected
+      display: flex
+      flex-direction: row
+      align-items: flex-end
+      margin-bottom: -1px
+
+      $border-radius: $head-height*0.24
+
+      > .center
+        background-color: $color-ground
+        border: $border
+        border-bottom: none
+        @each $side in [left, right]
+          border-top-#{$side}-radius: $border-radius
+
+      > .morph
+        width: $border-radius
+        height: $border-radius
+        background-color: $color-ground
+        z-index: 1
+
+        &::before
+          content: ""
+          display: block
+          box-sizing: border-box
+          width: 100%
+          height: 100%
+          background-color: $color-head
+      
+        @each $side, $other-side in [(left, right), (right, left)]
+          &.#{$side}
+            margin-#{$side}: -$border-radius
+            margin-#{$other-side}: -1px
+            &::before
+              border-bottom-#{$other-side}-radius: 100%
+              border-bottom: $border
+              border-#{$other-side}: $border
+
+  #actions
+    display: flex
+    flex-direction: row
+    align-items: flex-start
+
+    > *
+      height: 0.7*$head-height
+      margin: 2px
+      margin-left: 0
+      background-color: $color-highlight
+      color: $color-ground
+      text-transform: uppercase
+      display: flex
+      align-items: center
+
+    button
+      border-radius: 0
+      padding: 0 ($head-height*0.3)
+      &.disabled
+        color: $color-head-variant
+      font-size: $font-size-small
+
+    > * > button
+      background-color: none
+
+    button.icon
+      @each $dim in [width, height]
+        #{$dim}: 0.7*$head-height
+      background-size: contain
+      background-position: center
+      background-repeat: no-repeat
+      opacity: 90%
+      &.disabled
+        opacity: 50%
+        &:hover
+          cursor: auto !important
+
+      &.save
+        background-image: url(img/save.svg)
+      &.new-file
+        background-image: url(img/new_file.svg)
+      &.open-file
+        background-image: url(img/open_file.svg)
+      
+
+#content
+  flex: 1 1
+  overflow-y: auto
+  padding: 8vmin
+  display: flex
+  flex-direction: row
+  justify-content: center
+
+
+// -------- widgets --------
+
+button
+  border: none
+  padding: ($font-size-medium*0.6) ($font-size-medium*1.2)
+  border-radius: $font-size-medium*0.8
+  font-size: $font-size-medium
+  font-weight: bold
+  text-transform: uppercase
+  background-color: $color-highlight
+  color: $color-ground
+  &:hover
+    cursor: pointer
+
+  &.secondary
+    background-color: $color-element-strong
+    color: $color-highlight
+
+  &.small
+    font-size: $font-size-small
+    background-color: $color-element-subtle
+    color: $color-on-ground
+
+input[type="text"]
+  border-radius: 1.2vmin
+  border: none
+  background-color: $color-element-subtle
+  color: $color-on-ground
+  text-align: center
+
+  &:focus, &:hover
+    outline: solid 1px $color-on-ground
+
+.open-file-button
+  position: relative
+  display: flex
+  flex-direction: column
+  align-items: stretch
+  justify-content: stretch
+
+  > input
+    position: absolute
+    @each $side in [left, right, top, bottom]
+      #{$side}: 0
+    opacity: 0
+    &:hover
+      cursor: pointer
+
+.main-menu
+  align-self: center
+  margin-bottom: 14%
+  display: flex
+  flex-direction: column
+  align-items: stretch
+
+  > :not(:first-child)
+    margin-top: $font-size-big*1.4
+  
+  button
+    background-color: $color-element-subtle
+    color: $color-on-ground
+    font-size: $font-size-big
+    @each $side in [left, right]
+      padding-#{$side}: $font-size-big*2
+
+
+// -------- layout (visualise keys) --
+
+.hand
+  display: flex
+  flex-direction: row
+  align-items: flex-start
+
+  // have to do this because cant do margins in % of own size and box-shadow does not accept %-values
+  @mixin key-size($size)
+  
+    // thumb
+    &.left > :last-child, &.right > :first-child
+      margin-top: 0.9*$size
+
+    // little finger
+    &.left > :first-child, &.right > :last-child
+      margin-top: 0.6*$size
+
+    &:last-child
+      margin-left: 0.8*$size
+
+    .key
+      width: $size
+      height: $size
+      margin: 0.14*$size
+      box-shadow: 0 ($size/6) ($size/3) rgba(0, 0, 0, 0.32)
+      > div
+        width: 0.75*$size
+        height: 0.75*$size
+        font-size: 0.32*$size
+
+  @include key-size($key-size)
+  &.small
+    @include key-size($key-size*0.6)
+
+  .key
+    display: flex
+    flex-direction: column
+    align-items: center
+    border-radius: 25%
+    
+    > div
+      display: flex
+      align-items: center
+      justify-content: center
+      border-radius: 25%
+      font-weight: bold
+
+    @mixin key-color($main-color, $light-color)
+      background-color: $main-color
+      > div
+        background-image: linear-gradient(transparent, $light-color)
+      
+    &.disabled
+      @include key-color($color-ground, $color-element-subtle)
+      
+    &.labeled
+      @include key-color($color-element-subtle, $color-element-strong)
+      
+    &.pressed
+      @include key-color($color-element-strong, $color-highlight)
+
+    &:hover, &:focus, .selected
+      cursor: pointer
+      outline: solid 1px $color-on-ground
+
+.hands
+  display: flex
+  flex-direction: row
+
+
+// --------- layout editor -------
+
+#basic-key-config
+  align-self: center
+  margin-bottom: 14%
+  display: flex
+  flex-direction: column
+
+  > button
+    align-self: flex-end
+    margin-top: 8vh
+
+#chord-config
+
+  #chords
+    display: flex
+    flex-direction: row
+    flex-wrap: wrap
+    //justify-content: center
+
+    > *
+      margin: 1.8vmin
+
+    .chord
+      position: relative
+      display: flex
+      flex-direction: row
+      align-items: center
+      padding: 2vmin 3.2vmin
+      border: solid 1px $color-element-strong
+      border-radius: 2vmin
+
+      .out-key
+        width: 6vmin
+        height: 4vmin
+        margin-right: 1.2vmin
+        font-size: $font-size-medium
+        font-weight: bold
+        caret-color: transparent
+
+      .key.labeled:hover
+        cursor: auto
+        outline: none
+
+      button.close
+        position: absolute
+        @each $dim in [width, height]
+          #{$dim}: 3vmin
+        padding: 0
+        right: 1vmin
+        top: -1.5vmin
+        border-radius: 50%
+        background: $color-element-subtle url(img/close.svg) center no-repeat
+        background-size: contain
+  
+    > button.small
+      align-self: center
+      margin-left: 4.2vmin
+
+#pin-config
+  align-self: center
+  display: flex
+  flex-direction: column
+  align-items: stretch
+
+  > div
+    display: flex
+    align-items: flex-end
+
+  .row-labels
+    display: flex
+    flex-direction: column
+    align-items: flex-end
+    width: 0
+    white-space: nowrap
+    overflow: visible
+
+    > div
+      color: $color-element-strong
+      margin-right: 1vmin
+      // positioning hardcoded (not so elegant :/ but it works)
+      &:first-child
+        margin-bottom: 3.8vmin
+      &:last-child
+        margin-bottom: 2.2vmin
+  
+  .hand
+    align-items: stretch
+
+    > div
+      align-items: stretch
+      display: flex
+      flex-direction: column
+      align-items: center
+
+      > .key:hover
+        cursor: auto
+        outline: none
+
+      > .line
+        width: 1px
+        min-height: 4vmin
+        flex: 1
+        background-color: $color-element-strong
+
+      > input[type="text"]
+        box-sizing: border-box
+        width: $key-size
+        padding: 1vmin
+
+      > .pull-resistor
+        width: $key-size
+        display: flex
+        flex-direction: column
+        align-items: stretch
+        margin-top: 1.4vmin
+
+        > button
+          padding: 0.6vmin 0
+          color: $color-highlight
+          font-size: $font-size-small
+          font-weight: normal
+          &.selected
+            background-color: $color-element-strong
+            font-weight: bold
+
+        > :first-child
+          border-bottom-left-radius: 0
+          border-bottom-right-radius: 0
+
+        > :last-child
+          border-top-left-radius: 0
+          border-top-right-radius: 0
+  
+  > .buttons
+    justify-content: space-between
+    margin-top: 10vmin

@@ -1,0 +1,72 @@
+import std/[dom, tables, strformat]
+import jsony
+include karax/prelude
+
+
+proc downloadFile*(name, kind, content: string) =
+  let node = document.createElement("a")
+  node.setAttribute("href", cstring &"data:{kind};charset=utf-8,{encodeURIComponent(content)}")
+  node.setAttribute("download", cstring name)
+  click node
+
+proc uploadFile*(node: Node, cb: proc(content: string)) =
+  let file = node.InputElement.files[0]
+  let reader = newFileReader()
+  reader.onload = proc(_: Event) =
+    cb($reader.resultAsString)
+    redraw()
+  reader.readAsText(file)
+
+proc drawOpenFileButton*(button: VNode, onUpload: proc(content: string)): VNode =
+  buildHtml(tdiv(class = "open-file-button", title = "open")):
+    button
+    input(`type` = "file"):
+      proc onChange(_: Event, n: VNode) =
+        n.dom.uploadFile(onUpload)
+
+proc drawOpenFileButton*(text: string, onUpload: proc(content: string)): VNode =
+  drawOpenFileButton(buildHtml(button, text text), onUpload)
+  
+
+proc parseHook*[K: not string, V](s: string, i: var int, v: var SomeTable[K, V]) =
+  when compiles(new(v)):
+    new(v)
+  eatChar(s, i, '{')
+  while i < s.len:
+    eatSpace(s, i)
+    if i < s.len and s[i] == '}':
+      break
+    eatChar(s, i, '"')
+    var key: K
+    parseHook(s, i, key)
+    eatChar(s, i, '"')
+    eatChar(s, i, ':')
+    var element: V
+    parseHook(s, i, element)
+    v[key] = element
+    if i < s.len and s[i] == ',':
+      inc i
+    else:
+      break
+  eatChar(s, i, '}')
+
+proc dumpHook*[K: not string, V](s: var string, v: Table[K, V]) =
+  s.add '{'
+  var i = 0
+  for k, v in v:
+    if i != 0:
+      s.add ','
+    s.add '"'
+    dumpHook(s, k)
+    s.add "\":"
+    dumpHook(s, v)
+    inc i
+  s.add '}'
+
+
+func toBinNum*[T](s: set[T]): string =
+  result = "0b"
+  for i in countdown(high(T), low(T)):
+    result.add:
+      if i in s: "1"
+      else: "0"
