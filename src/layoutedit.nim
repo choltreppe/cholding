@@ -10,7 +10,7 @@ import std/[options, tables, setutils, sequtils, strutils, sugar, dom]
 import fusion/matching
 include karax/prelude
 import jsony
-import ./utils, ./layouts
+import ./utils, ./errorpopup, ./layouts
 
 
 type
@@ -38,6 +38,7 @@ type
       justAddedChord: bool
     of pinConfig:
       pins: seq[Pin]
+      errorPinNames: seq[string]
     else: discard
 
 converter toView*(stage: LayoutEditStage): LayoutEditView =
@@ -48,9 +49,20 @@ proc new(view: var LayoutEditView, layout: var Layout) =
   layout = Layout()
   view = LayoutEditView()
 
-proc open*(view: var LayoutEditView, layout: var Layout, content: string) =
-  layout = content.fromJson(Layout)
-  view = chordConfig
+proc open*(
+  view: var LayoutEditView,
+  layout: var Layout,
+  content: string
+): bool {.discardable.} =
+  try:
+    layout = content.fromJson(Layout)
+    view = chordConfig
+    result = true
+  except JsonError as e:
+    setErrorPopup(
+      title = "Failed to open layout",
+      msg = e.msg
+    )
 
 proc save(layout: Layout) {.inline.} =
   downloadFile("layout.json", "text/json", layout.toJson)
@@ -120,10 +132,19 @@ proc draw*(
             view.justAddedChord = true
 
     of chordConfig:
+      let dupInKeys = layout.chords.mapIt(it.inKeys).duplicates
+      let dupOutKeys = layout.chords.mapIt(it.outKey).duplicates
       buildHtml(tdiv(id = "chord-config")):
         tdiv(id = "chords"):
           for i, chord in layout.chords:
-            capture(i, buildHtml(tdiv(class = "chord")) do:
+            let errInKeys = card(chord.inKeys) == 0 or chord.inKeys in dupInKeys
+            let errOutKey = chord.outKey.keyCode == 0 or chord.outKey in dupOutKeys
+            capture(i, buildHtml(tdiv(
+              class = "chord".addClassIf(i < high(layout.chords), ""
+                .addClassIf(errInKeys, "error-in-keys")
+                .addClassIf(errOutKey, "error-out-key")
+              )
+            )) do:
               input(
                 class = "out-key",
                 `type` = "text",
@@ -137,7 +158,7 @@ proc draw*(
                   drawKey(layout.basicKeys[id])
                 else:
                   drawKey(pressed = id in chord.inKeys) do (e: Event, n: VNode):
-                    layout.chords[i].inKeys[id] = id notin chord.inKeys
+                    layout.chords[i].inKeys[id] = id notin layout.chords[i].inKeys
               button(class = "close"):
                 proc onClick =
                   layout.chords.del(i)
@@ -158,9 +179,18 @@ proc draw*(
             buildHtml(tdiv):
               drawKey()
               tdiv(class = "line")
-              input(`type` = "text", value = view.pins[id].name, tabindex = $(id+1)):
+              input(
+                `type` = "text",
+                value = view.pins[id].name,
+                tabindex = $(id+1),
+                class =
+                  if view.pins[id].name in view.errorPinNames:
+                    " error"
+                  else: ""
+              ):
                 proc onInput(_: Event, n: Vnode) =
-                  view.pins[id].name = $n.value
+                  view.pins[id].name = strip($n.value)
+                  view.errorPinNames = @[]
               tdiv(class = "pull-resistor"):
                 for kind in PullResistorKind:
                   if kind == view.pins[id].pullResistor:
@@ -175,11 +205,19 @@ proc draw*(
           button(class = "secondary"):
             text "cancel"
             proc onClick = view = chordConfig
-          button:
-            text "save"
-            proc onClick =
-              downloadFile("code.ino", "text/arduino", generateArduino(layout, view.pins))
-              view = chordConfig
+          if len(view.errorPinNames) == 0:
+            button:
+              text "export"
+              proc onClick =
+                view.errorPinNames = view.pins.mapIt(it.name).duplicates
+                if view.pins.anyIt(it.name == ""):
+                  view.errorPinNames &= ""
+                if len(view.errorPinNames) == 0:
+                  downloadFile("code.ino", "text/arduino", generateArduino(layout, view.pins))
+                  view = chordConfig
+          else:
+            button(class = "disabled"):
+              text "export"
 
   if view.stage == chordConfig:
     result.actions.add: buildHtml(button):

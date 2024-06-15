@@ -9,6 +9,7 @@
 import std/[options, tables, strutils, sugar, dom]
 import fusion/matching
 include karax/prelude
+import ./utils
 
 
 type
@@ -93,7 +94,7 @@ proc drawHands*(
   drawKey: proc(id: InKeyId): VNode
 ): VNode =
   proc drawHand(hand: HandSetup, offset: InKeyId): VNode =
-    buildHtml(tdiv(class = kstring "hand " & $hand & (if isSmall: " small" else: ""))):
+    buildHtml(tdiv(class = kstring ("hand " & $hand).addClassIf(isSmall, "small"))):
       for id in offset .. offset+4:
         drawKey(id)
   case handSetup

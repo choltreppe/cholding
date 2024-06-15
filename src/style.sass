@@ -13,6 +13,8 @@ $color-element-subtle: #303841
 $color-element-strong: #4f565e
 $color-highlight: #b8bbbe
 $color-on-ground: #e5e5e4
+$color-error-ground: #4f3047
+$color-error-outline: #e097c7
 
 $font: Fira Sans, Arial
 $font-size-big: 2.1vmin
@@ -165,7 +167,6 @@ body
       &.open-file
         background-image: url(img/open_file.svg)
       
-
 #content
   flex: 1 1
   overflow-y: auto
@@ -173,6 +174,49 @@ body
   display: flex
   flex-direction: row
   justify-content: center
+
+
+#error-popup
+  position: absolute
+  @each $side in [left, right, top, bottom]
+    #{$side}: 0
+  display: flex
+  align-items: center
+  justify-content: center
+  z-index: 1000
+
+  > .backdrop
+    position: absolute
+    width: 100%
+    height: 100%
+    background-color: rgba(0, 0, 0, 0.4)
+    backdrop-filter: blur(0.4vmin)
+
+  > .msg
+    position: relative
+    display: flex
+    flex-direction: column
+    justify-content: stretch
+    padding: 1.6vmin
+    background-color: $color-error-ground
+    border-radius: 2.4vmin
+    box-shadow: 0 2vmin 12vmin rgb(0, 0, 0.2)
+
+    > *
+      padding: 1vmin
+
+    > .title
+      font-size: $font-size-big
+      font-weight: bold
+      border-bottom: solid 1px $color-error-outline
+
+    > .content
+      padding-top: 1.6vmin
+
+    > button.close
+      position: absolute
+      top: -1.5vmin
+      right: 1vmin
 
 
 // -------- widgets --------
@@ -198,6 +242,14 @@ button
     background-color: $color-element-subtle
     color: $color-on-ground
 
+button.close
+  @each $dim in [width, height]
+    #{$dim}: 3vmin
+  padding: 0 !important
+  border-radius: 50%
+  background: $color-element-subtle url(img/close.svg) center no-repeat
+  background-size: contain
+
 input[type="text"]
   border-radius: 1.2vmin
   border: none
@@ -207,6 +259,9 @@ input[type="text"]
 
   &:focus, &:hover
     outline: solid 1px $color-on-ground
+
+  &.error
+    background-color: $color-error-ground
 
 .open-file-button
   position: relative
@@ -358,14 +413,19 @@ input[type="text"]
 
       button.close
         position: absolute
-        @each $dim in [width, height]
-          #{$dim}: 3vmin
-        padding: 0
         right: 1vmin
         top: -1.5vmin
-        border-radius: 50%
-        background: $color-element-subtle url(img/close.svg) center no-repeat
-        background-size: contain
+
+      &.error-in-keys, &.error-out-key
+        border-color: $color-error-outline
+
+      &.error-in-keys .key.pressed
+        background-color: $color-error-ground
+        > div
+          background-image: linear-gradient(transparent, $color-error-outline)
+
+      &.error-out-key .out-key
+        background-color: $color-error-ground
   
     > button.small
       align-self: center

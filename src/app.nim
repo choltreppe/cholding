@@ -9,7 +9,7 @@
 import std/[sugar, dom]
 include karax/prelude
 import jsony
-import ./utils, ./layouts, ./layoutedit
+import ./utils, ./errorpopup, ./layouts, ./layoutedit
 
 
 type
@@ -33,7 +33,8 @@ proc drawMainMenu: VNode =
     
     drawOpenFileButton("open layout") do(content: string):
       app.data = AppData()
-      open(app.data.layoutEditor, app.data.layout, content)
+      if not open(app.data.layoutEditor, app.data.layout, content):
+        app.data = nil
 
 proc drawDom: VNode =
   let (actions, content) =
@@ -45,6 +46,8 @@ proc drawDom: VNode =
       of typingPractise: (@[], text"not yet implemented :/")
 
   buildHtml(tdiv):
+    drawErrorPopup()
+
     tdiv(id = "head"):
       tdiv(id = "logo"): text "CHOL CHORDING"  #TODO
       tdiv(id = "main-tabs"):

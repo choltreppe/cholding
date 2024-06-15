@@ -26,7 +26,7 @@ proc drawOpenFileButton*(button: VNode, onUpload: proc(content: string)): VNode 
 
 proc drawOpenFileButton*(text: string, onUpload: proc(content: string)): VNode =
   drawOpenFileButton(buildHtml(button, text text), onUpload)
-  
+
 
 proc parseHook*[K: not string, V](s: string, i: var int, v: var SomeTable[K, V]) =
   when compiles(new(v)):
@@ -70,3 +70,17 @@ func toBinNum*[T](s: set[T]): string =
     result.add:
       if i in s: "1"
       else: "0"
+
+
+func duplicates*[T](things: openarray[T]): seq[T] =
+  var found: seq[T]
+  for thing in things:
+    if thing in found:
+      result &= thing
+    else:
+      found &= thing
+
+
+func addClassIf*(base: string, cond: bool, name: string): string =
+  result = base
+  if cond: result &= " " & name
