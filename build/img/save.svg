@@ -41,7 +41,7 @@
      id="layer1">
     <path
        id="rect13682"
-       style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.79375;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:#010000;fill-opacity:1;stroke:none;stroke-width:0.79375;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        d="m 2.1726282,2.4335731 v 4.12117 H 6.2940385 V 3.2953093 L 5.4320574,2.4335731 H 5.0948166 v 0.5421231 c 0,0.2980694 -0.245294,0.544358 -0.5433588,0.544358 h -1.283161 c -0.2980741,0 -0.5433727,-0.2462886 -0.5433727,-0.544358 V 2.4335731 Z m 0.9332483,0 v 0.5421231 c 0,0.093349 0.06906,0.1624111 0.1624203,0.1624111 h 1.283161 c 0.093336,0 0.1624064,-0.069062 0.1624064,-0.1624111 V 2.4335731 Z M 2.9769986,4.7920374 H 5.514752 V 5.814945 H 2.9769986 Z" />
   </g>
 </svg>

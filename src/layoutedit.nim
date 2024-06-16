@@ -110,6 +110,11 @@ proc draw*(
 
     of basicKeyConfig:
       buildHtml(tdiv(id = "basic-key-config")):
+        tdiv(class = "info-box"):
+          text "Select the keys that should function like a normal keyboard."
+          br()
+          text "Click on the key and press the key, it should be."
+
         drawHands(layout.handSetup, isSmall=false) do(id: InKeyId) -> VNode:
           if id in layout.basicKeys:
             var node = drawKey(layout.basicKeys[id]) do(key: OutKey):
@@ -117,7 +122,6 @@ proc draw*(
             (node.addEventHandler(onClick) do(_: Event, n: VNode):
               if n.dom == document.activeElement:
                 layout.basicKeys.del(id)
-                blur n.dom.Element
             )
             node
           else:

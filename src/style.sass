@@ -35,6 +35,18 @@ body
   margin: 0
 
 
+@mixin recolor($color)
+  $r: red($color) / 255
+  $g: green($color) / 255
+  $b: blue($color) / 255
+  // grayscale fallback if SVG from data url is not supported
+  $lightness: lightness($color)
+  filter: saturate(0%) brightness(0%) invert($lightness)
+  // color filter
+  $svg-filter-id: "recolor"
+  filter: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><filter id="#{$svg-filter-id}" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0 0 0 0 #{$r} 0 0 0 0 #{$g} 0 0 0 0 #{$b} 0 0 0 1 0"/></filter></svg>##{$svg-filter-id}')
+
+
 // -------- base -----------
 
 #ROOT
@@ -132,7 +144,7 @@ body
       height: 0.7*$head-height
       margin: 2px
       margin-left: 0
-      background-color: $color-highlight
+      background-color: $color-highlight !important
       color: $color-ground
       text-transform: uppercase
       display: flex
@@ -141,12 +153,10 @@ body
     button
       border-radius: 0
       padding: 0 ($head-height*0.3)
+      background-color: transparent
       &.disabled
         color: $color-head-variant
       font-size: $font-size-small
-
-    > * > button
-      background-color: none
 
     button.icon
       @each $dim in [width, height]
@@ -154,9 +164,9 @@ body
       background-size: contain
       background-position: center
       background-repeat: no-repeat
-      opacity: 90%
+      @include recolor($color-ground)
       &.disabled
-        opacity: 50%
+        @include recolor($color-element-strong)
         &:hover
           cursor: auto !important
 
@@ -247,8 +257,15 @@ button.close
     #{$dim}: 3vmin
   padding: 0 !important
   border-radius: 50%
-  background: $color-element-subtle url(img/close.svg) center no-repeat
-  background-size: contain
+  background-color: $color-element-subtle
+  &::after
+    content: ""
+    display: block
+    width: 100%
+    height: 100%
+    background: url(img/close.svg) center no-repeat
+    background-size: contain
+    @include recolor($color-on-ground)
 
 input[type="text"]
   border-radius: 1.2vmin
@@ -277,6 +294,12 @@ input[type="text"]
     opacity: 0
     &:hover
       cursor: pointer
+
+.info-box
+  padding: 2vmin
+  border-radius: 1.6vmin
+  background-color: $color-element-subtle
+  font-size: $font-size-small
 
 .main-menu
   align-self: center
@@ -374,6 +397,10 @@ input[type="text"]
   margin-bottom: 14%
   display: flex
   flex-direction: column
+
+  > .info-box
+    align-self: flex-start
+    margin-bottom: 6vh
 
   > button
     align-self: flex-end

@@ -18,9 +18,9 @@ proc uploadFile*(node: Node, cb: proc(content: string)) =
   reader.readAsText(file)
 
 proc drawOpenFileButton*(button: VNode, onUpload: proc(content: string)): VNode =
-  buildHtml(tdiv(class = "open-file-button", title = "open")):
+  buildHtml(tdiv(class = "open-file-button")):
     button
-    input(`type` = "file"):
+    input(`type` = "file", title = "open"):
       proc onChange(_: Event, n: VNode) =
         n.dom.uploadFile(onUpload)
 
