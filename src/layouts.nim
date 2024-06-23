@@ -9,13 +9,31 @@
 import std/[options, tables, strutils, sugar, dom]
 import fusion/matching
 include karax/prelude
-import ./utils
+import jsony
+import ./utils, ./widgets
 
 
 type
+  SpecialKey* = enum
+    keyEnter
+    keyBackspace
+    keyTab
+    keyEscape
+    keyArrowUp
+    keyArrowDown
+    keyArrowLeft
+    keyArrowRight
+
+    keyShift
+    keyCapsLock
+    keyControl
+    keyAlt
+    keyAltGraph
+
   OutKey* = object
-    keyCode*: byte
-    charCode*: string
+    case isSpecial*: bool
+    of false: c*: char
+    of true: key*: SpecialKey
 
   InKeyId* = range[0..9]  # max 10 keys (both hands)
 
@@ -33,34 +51,54 @@ type
 const keyCount*: array[HandSetup, int] = [5, 5, 10]
 
 func `$`*(key: OutKey): string =
-  case key.charCode
-  of " ": "␣"
-  of "Shift": "⇧"
-  of "CapsLock": "⇪"
-  of "Enter": "↵"
-  of "Backspace": "←"
-  of "Tab": "⭾"
-  of "Control": "Ctrl"
-  of "Escape": "Esc"
-  of "AltGraph": "AltGr"
-  of "ArrowUp": "🞁"
-  of "ArrowDown": "🞃"
-  of "ArrowLeft": "🞀"
-  of "ArrowRight": "🞂"
-  else:
-    if len(key.charCode) == 1:
-      key.charCode.toUpperASCII
-    else: key.charCode
+  if key.isSpecial:
+    case key.key
+    of keyEnter: "↵"
+    of keyBackspace: "←"
+    of keyTab: "⭾"
+    of keyEscape: "Esc"
+    of keyArrowUp: "🞁"
+    of keyArrowDown: "🞃"
+    of keyArrowLeft: "🞀"
+    of keyArrowRight: "🞂"
+    of keyShift: "⇧"
+    of keyCapsLock: "⇪"
+    of keyControl: "Ctrl"
+    of keyAlt: "Alt"
+    of keyAltGraph: "AltGr"
+  elif key.c == ' ': "␣"
+  elif key.c == char(0): ""
+  else: $key.c
+
+func `==`*(a, b: OutKey): bool {.inline.} =
+  if a.isSpecial != b.isSpecial: false
+  elif a.isSpecial: a.key == b.key
+  else: a.c == b.c
+
+func isUndefined*(key: OutKey): bool {.inline.} =
+  not key.isSpecial and key.c == char(0)
+
+proc parseLayout*(content: string): Option[Layout] =
+  try: return some(content.fromJson(Layout))
+  except JsonError as e:
+    setErrorPopup(
+      title = "Failed to open layout",
+      msg = e.msg
+    )
+
+proc save*(layout: Layout) {.inline.} =
+  downloadFile("layout.json", "text/json", layout.toJson)
 
 
 proc registerKeyHandler*(cb: proc(key: OutKey)): auto =
   return proc(e: Event, n: VNode) =
     e.preventDefault()
-    let e = e.KeyboardEvent
-    cb(OutKey(
-      keyCode: byte e.keyCode,
-      charCode: $e.key
-    ))
+    let key = e.KeyboardEvent.key
+    cb:
+      if len(key) == 1:
+        OutKey(isSpecial: false, c: key[0])
+      else:
+        OutKey(isSpecial: true, key: parseEnum[SpecialKey]("key" & $key))
     blur n.dom.InputElement
 
 

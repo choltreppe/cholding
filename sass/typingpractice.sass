@@ -1,0 +1,41 @@
+//
+//    CholChording - A chorded keyboard layout configurator and typing trainer
+//        (c) Copyright 2024 Joel Lienhard (choltreppe)
+//
+//    See the file "LICENSE.txt", included in this
+//    distribution, for details about the copyright.
+//
+
+@import 'vars'
+
+  
+.practice-text
+  align-self: center
+  display: flex
+  flex-direction: column
+  align-items: center
+
+  > .text
+    align-self: stretch
+    display: flex
+    flex-wrap: wrap
+    align-items: stretch
+    margin-bottom: 16vh
+
+    > .symbol
+      font-size: $font-size-big
+      padding: 0.8vmin 1vmin
+      margin-bottom: 0.4vmin
+      margin-right: 2px
+      border-bottom: solid 0.3vmin transparent
+      
+      &.cursor
+        border-color: $color-element-strong
+        background-color: $color-element-subtle
+
+      &.failed
+        background-color: $color-error-ground
+  
+  .key:hover
+    cursor: auto
+    outline: none

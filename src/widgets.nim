@@ -22,3 +22,13 @@ proc drawErrorPopup*: VNode =
           proc onClick = errorPopupMsg = none((string, string))
   
   else: text ""
+
+
+proc drawPage*(actions: seq[VNode], content: VNode): VNode =
+  buildHtml(tdiv):
+    drawErrorPopup()
+    tdiv(id = "head"):
+      tdiv(id = "logo"): text "CHOL CHORDING"  #TODO
+      tdiv(id = "actions"):
+        for action in actions: action
+    tdiv(id = "content"): content

@@ -1,0 +1,30 @@
+$color-head: #353535
+$color-head-variant: #444444
+$color-ground: #22262a
+$color-element-subtle: #303841
+$color-element-strong: #4f565e
+$color-highlight: #b8bbbe
+$color-on-ground: #e5e5e4
+$color-error-ground: #4f3047
+$color-error-outline: #e097c7
+
+$font: Fira Sans, Arial
+$font-size-big: 2.1vmin
+$font-size-medium: 1.9vmin
+$font-size-small: 1.6vmin
+
+$head-height: 5vmin
+
+$key-size: 6vmin
+
+
+@mixin recolor($color)
+  $r: red($color) / 255
+  $g: green($color) / 255
+  $b: blue($color) / 255
+  // grayscale fallback if SVG from data url is not supported
+  $lightness: lightness($color)
+  filter: saturate(0%) brightness(0%) invert($lightness)
+  // color filter
+  $svg-filter-id: "recolor"
+  filter: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><filter id="#{$svg-filter-id}" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0 0 0 0 #{$r} 0 0 0 0 #{$g} 0 0 0 0 #{$b} 0 0 0 1 0"/></filter></svg>##{$svg-filter-id}')

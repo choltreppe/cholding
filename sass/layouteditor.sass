@@ -1,0 +1,155 @@
+//
+//    CholChording - A chorded keyboard layout configurator and typing trainer
+//        (c) Copyright 2024 Joel Lienhard (choltreppe)
+//
+//    See the file "LICENSE.txt", included in this
+//    distribution, for details about the copyright.
+//
+
+@import 'vars'
+
+  
+#basic-key-config
+  align-self: center
+  margin-bottom: 14%
+  display: flex
+  flex-direction: column
+
+  > .info-box
+    align-self: flex-start
+    margin-bottom: 6vh
+
+  > button
+    align-self: flex-end
+    margin-top: 8vh
+
+#chord-config
+
+  #chords
+    display: flex
+    flex-direction: row
+    flex-wrap: wrap
+    //justify-content: center
+
+    > *
+      margin: 1.8vmin
+
+    .chord
+      position: relative
+      display: flex
+      flex-direction: row
+      align-items: center
+      padding: 2vmin 3.2vmin
+      border: solid 1px $color-element-strong
+      border-radius: 2vmin
+
+      .out-key
+        width: 6vmin
+        height: 4vmin
+        margin-right: 1.2vmin
+        font-size: $font-size-medium
+        font-weight: bold
+        caret-color: transparent
+
+      .key.labeled:hover
+        cursor: auto
+        outline: none
+
+      button.close
+        position: absolute
+        right: 1vmin
+        top: -1.5vmin
+
+      &.error-in-keys, &.error-out-key
+        border-color: $color-error-outline
+
+      &.error-in-keys .key.pressed
+        background-color: $color-error-ground
+        > div
+          background-image: linear-gradient(transparent, $color-error-outline)
+
+      &.error-out-key .out-key
+        background-color: $color-error-ground
+  
+    > button.small
+      align-self: center
+      margin-left: 4.2vmin
+
+#pin-config
+  align-self: center
+  display: flex
+  flex-direction: column
+  align-items: stretch
+
+  > div
+    display: flex
+    align-items: flex-end
+
+  .row-labels
+    display: flex
+    flex-direction: column
+    align-items: flex-end
+    width: 0
+    white-space: nowrap
+    overflow: visible
+
+    > div
+      color: $color-element-strong
+      margin-right: 1vmin
+      // positioning hardcoded (not so elegant :/ but it works)
+      &:first-child
+        margin-bottom: 3.8vmin
+      &:last-child
+        margin-bottom: 2.2vmin
+  
+  .hand
+    align-items: stretch
+
+    > div
+      align-items: stretch
+      display: flex
+      flex-direction: column
+      align-items: center
+
+      > .key:hover
+        cursor: auto
+        outline: none
+
+      > .line
+        width: 1px
+        min-height: 4vmin
+        flex: 1
+        background-color: $color-element-strong
+
+      > input[type="text"]
+        box-sizing: border-box
+        width: $key-size
+        padding: 1vmin
+
+      > .pull-resistor
+        width: $key-size
+        display: flex
+        flex-direction: column
+        align-items: stretch
+        margin-top: 1.4vmin
+
+        > button
+          padding: 0.6vmin 0
+          color: $color-highlight
+          font-size: $font-size-small
+          font-weight: normal
+          &.selected
+            background-color: $color-element-strong
+            font-weight: bold
+
+        > :first-child
+          border-bottom-left-radius: 0
+          border-bottom-right-radius: 0
+
+        > :last-child
+          border-top-left-radius: 0
+          border-top-right-radius: 0
+  
+  > .buttons
+    justify-content: space-between
+    margin-top: 10vmin

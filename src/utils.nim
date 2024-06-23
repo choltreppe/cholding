@@ -1,6 +1,16 @@
-import std/[dom, tables, strformat]
+import std/[dom, tables, strutils, strformat, options]
+import fusion/matching
 import jsony
 include karax/prelude
+
+
+proc setCookie*(name, value: string) =
+  document.cookie = &"{name}={value}"
+
+proc getCookie*(name: string): Option[string] =
+  for cookieStr in decodeURIComponent(document.cookie).`$`.split(';'):
+    if ([@n, @v] ?= cookieStr.split("=")) and strip(n) == name:
+      return some(v)
 
 
 proc downloadFile*(name, kind, content: string) =

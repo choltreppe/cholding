@@ -1,2 +1,4 @@
-**/*.js
-**/*.css
+build/*.js
+build/*.css
+build/*.html
+nakefile

@@ -5,25 +5,8 @@
 //    See the file "LICENSE.txt", included in this
 //    distribution, for details about the copyright.
 //
-  
-$color-head: #353535
-$color-head-variant: #444444
-$color-ground: #22262a
-$color-element-subtle: #303841
-$color-element-strong: #4f565e
-$color-highlight: #b8bbbe
-$color-on-ground: #e5e5e4
-$color-error-ground: #4f3047
-$color-error-outline: #e097c7
 
-$font: Fira Sans, Arial
-$font-size-big: 2.1vmin
-$font-size-medium: 1.9vmin
-$font-size-small: 1.6vmin
-
-$head-height: 5vmin
-
-$key-size: 6vmin
+@import 'vars'
 
 
 html
@@ -33,18 +16,6 @@ html
 
 body
   margin: 0
-
-
-@mixin recolor($color)
-  $r: red($color) / 255
-  $g: green($color) / 255
-  $b: blue($color) / 255
-  // grayscale fallback if SVG from data url is not supported
-  $lightness: lightness($color)
-  filter: saturate(0%) brightness(0%) invert($lightness)
-  // color filter
-  $svg-filter-id: "recolor"
-  filter: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><filter id="#{$svg-filter-id}" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0 0 0 0 #{$r} 0 0 0 0 #{$g} 0 0 0 0 #{$b} 0 0 0 1 0"/></filter></svg>##{$svg-filter-id}')
 
 
 // -------- base -----------
@@ -63,6 +34,7 @@ body
   display: flex
   flex-direction: row
   align-items: stretch
+  justify-content: space-between
   background-color: $color-head
   $border: solid 1px $color-head-variant
   border-bottom: $border
@@ -75,65 +47,6 @@ body
     font-weight: bold
     display: flex
     align-items: center
-
-  #main-tabs
-    flex: 1 1
-    display: flex
-    flex-direction: row
-    align-items: flex-end
-    margin: 0 ($head-height*0.4)
-    
-    $vert-padding: ($head-height - $font-size-big) / 3
-
-    > div
-      margin: 0 $vert-padding
-
-    > :not(.selected), > .selected > .center
-      font-size: $font-size-medium
-      padding: $vert-padding ($head-height*0.4)
-
-    > :not(.selected)
-      font-weight: 200
-      &:hover
-        cursor: pointer
-    
-    > .selected
-      display: flex
-      flex-direction: row
-      align-items: flex-end
-      margin-bottom: -1px
-
-      $border-radius: $head-height*0.24
-
-      > .center
-        background-color: $color-ground
-        border: $border
-        border-bottom: none
-        @each $side in [left, right]
-          border-top-#{$side}-radius: $border-radius
-
-      > .morph
-        width: $border-radius
-        height: $border-radius
-        background-color: $color-ground
-        z-index: 1
-
-        &::before
-          content: ""
-          display: block
-          box-sizing: border-box
-          width: 100%
-          height: 100%
-          background-color: $color-head
-      
-        @each $side, $other-side in [(left, right), (right, left)]
-          &.#{$side}
-            margin-#{$side}: -$border-radius
-            margin-#{$other-side}: -1px
-            &::before
-              border-bottom-#{$other-side}-radius: 100%
-              border-bottom: $border
-              border-#{$other-side}: $border
 
   #actions
     display: flex
@@ -180,7 +93,7 @@ body
 #content
   flex: 1 1
   overflow-y: auto
-  padding: 8vmin
+  padding: 6vmin
   display: flex
   flex-direction: row
   justify-content: center
@@ -388,151 +301,3 @@ input[type="text"]
 .hands
   display: flex
   flex-direction: row
-
-
-// --------- layout editor -------
-
-#basic-key-config
-  align-self: center
-  margin-bottom: 14%
-  display: flex
-  flex-direction: column
-
-  > .info-box
-    align-self: flex-start
-    margin-bottom: 6vh
-
-  > button
-    align-self: flex-end
-    margin-top: 8vh
-
-#chord-config
-
-  #chords
-    display: flex
-    flex-direction: row
-    flex-wrap: wrap
-    //justify-content: center
-
-    > *
-      margin: 1.8vmin
-
-    .chord
-      position: relative
-      display: flex
-      flex-direction: row
-      align-items: center
-      padding: 2vmin 3.2vmin
-      border: solid 1px $color-element-strong
-      border-radius: 2vmin
-
-      .out-key
-        width: 6vmin
-        height: 4vmin
-        margin-right: 1.2vmin
-        font-size: $font-size-medium
-        font-weight: bold
-        caret-color: transparent
-
-      .key.labeled:hover
-        cursor: auto
-        outline: none
-
-      button.close
-        position: absolute
-        right: 1vmin
-        top: -1.5vmin
-
-      &.error-in-keys, &.error-out-key
-        border-color: $color-error-outline
-
-      &.error-in-keys .key.pressed
-        background-color: $color-error-ground
-        > div
-          background-image: linear-gradient(transparent, $color-error-outline)
-
-      &.error-out-key .out-key
-        background-color: $color-error-ground
-  
-    > button.small
-      align-self: center
-      margin-left: 4.2vmin
-
-#pin-config
-  align-self: center
-  display: flex
-  flex-direction: column
-  align-items: stretch
-
-  > div
-    display: flex
-    align-items: flex-end
-
-  .row-labels
-    display: flex
-    flex-direction: column
-    align-items: flex-end
-    width: 0
-    white-space: nowrap
-    overflow: visible
-
-    > div
-      color: $color-element-strong
-      margin-right: 1vmin
-      // positioning hardcoded (not so elegant :/ but it works)
-      &:first-child
-        margin-bottom: 3.8vmin
-      &:last-child
-        margin-bottom: 2.2vmin
-  
-  .hand
-    align-items: stretch
-
-    > div
-      align-items: stretch
-      display: flex
-      flex-direction: column
-      align-items: center
-
-      > .key:hover
-        cursor: auto
-        outline: none
-
-      > .line
-        width: 1px
-        min-height: 4vmin
-        flex: 1
-        background-color: $color-element-strong
-
-      > input[type="text"]
-        box-sizing: border-box
-        width: $key-size
-        padding: 1vmin
-
-      > .pull-resistor
-        width: $key-size
-        display: flex
-        flex-direction: column
-        align-items: stretch
-        margin-top: 1.4vmin
-
-        > button
-          padding: 0.6vmin 0
-          color: $color-highlight
-          font-size: $font-size-small
-          font-weight: normal
-          &.selected
-            background-color: $color-element-strong
-            font-weight: bold
-
-        > :first-child
-          border-bottom-left-radius: 0
-          border-bottom-right-radius: 0
-
-        > :last-child
-          border-top-left-radius: 0
-          border-top-right-radius: 0
-  
-  > .buttons
-    justify-content: space-between
-    margin-top: 10vmin

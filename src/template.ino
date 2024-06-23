@@ -5,7 +5,7 @@ typedef unsigned short int t_keys;
 
 #define KEY_COUNT $key_count
 const int key_pins[KEY_COUNT] = $key_pins;
-const int key_pulls[KEY_COUNT] = $key_pulls;
+const int key_levels[KEY_COUNT] = $key_levels;
 const char basic_keys[KEY_COUNT] = $basic_keys;
 const t_keys chord_mask = $chord_mask;
 char chords[1 << KEY_COUNT] = {0};
@@ -40,10 +40,10 @@ void setup() {
   $init_chords
 
   for(int i = 0; i < KEY_COUNT; ++i) {
-    if(key_pulls[i])
-      pinMode(key_pins[i], INPUT_PULLUP);
-    else
+    if(key_levels[i])
       pinMode(key_pins[i], INPUT_PULLDOWN);
+    else
+      pinMode(key_pins[i], INPUT_PULLUP);
   }
   Keyboard.begin();
 }
@@ -52,7 +52,7 @@ void loop() {
   while(true) {
     for(int i = 0; i < KEY_COUNT; ++i) {
       bool was_pressed = get_key(i);
-      bool is_pressed = digitalRead(key_pins[i]) != key_pulls[i];
+      bool is_pressed = digitalRead(key_pins[i]) == key_levels[i];
       char basic_key = basic_keys[i];
       if(!was_pressed && is_pressed) {
         if(basic_key > 0)
