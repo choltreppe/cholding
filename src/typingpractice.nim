@@ -57,14 +57,15 @@ func getConfig(layout: Layout): Config =
     keyLookup: getKeyLookup(layout.basicKeys, layout.chords)
   )
 
-proc openLayout(json: string) =
-  if Some(@layout) ?= parseLayout(json):
-    self = TypingPractice(
-      isOpen: true,
-      config: getConfig(layout),
-      view: TypingPracticeView(kind: practiceSelect)
-      #PracticeText(text: "ass,ea eee")
-    )
+proc openLayout =
+  uploadFile do(content: string):
+    if Some(@layout) ?= parseLayout(content):
+      self = TypingPractice(
+        isOpen: true,
+        config: getConfig(layout),
+        view: TypingPracticeView(kind: practiceSelect)
+        #PracticeText(text: "ass,ea eee")
+      )
 
 
 proc input(ptext: var PracticeText, symbol: string) =
@@ -97,8 +98,9 @@ proc drawDom*: VNode =
   drawPage(@[]):
     if not self.isOpen:
       buildHtml(tdiv(class = "main-menu")):
-        drawOpenFileButton("open layout") do(content: string):
-          openLayout(content)
+        button:
+          text "open layout"
+          proc onClick = openLayout()
 
     else:
       text "todo"

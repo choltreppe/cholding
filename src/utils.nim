@@ -1,11 +1,11 @@
 import std/[dom, tables, strutils, strformat, options]
 import fusion/matching
+import karax/karax
 import jsony
-include karax/prelude
 
 
 proc setCookie*(name, value: string) =
-  document.cookie = &"{name}={value}"
+  document.cookie = cstring &"{name}={value}"
 
 proc getCookie*(name: string): Option[string] =
   for cookieStr in decodeURIComponent(document.cookie).`$`.split(';'):
@@ -19,23 +19,17 @@ proc downloadFile*(name, kind, content: string) =
   node.setAttribute("download", cstring name)
   click node
 
-proc uploadFile*(node: Node, cb: proc(content: string)) =
-  let file = node.InputElement.files[0]
-  let reader = newFileReader()
-  reader.onload = proc(_: Event) =
-    cb($reader.resultAsString)
-    redraw()
-  reader.readAsText(file)
-
-proc drawOpenFileButton*(button: VNode, onUpload: proc(content: string)): VNode =
-  buildHtml(tdiv(class = "open-file-button")):
-    button
-    input(`type` = "file", title = "open"):
-      proc onChange(_: Event, n: VNode) =
-        n.dom.uploadFile(onUpload)
-
-proc drawOpenFileButton*(text: string, onUpload: proc(content: string)): VNode =
-  drawOpenFileButton(buildHtml(button, text text), onUpload)
+proc uploadFile*(cb: proc(content: string)) =
+  let node = document.createElement("input").InputElement
+  node.setAttribute("type", "file")
+  node.onChange = proc(_: Event) =
+    let file = node.files[0]
+    let reader = newFileReader()
+    reader.onload = proc(_: Event) =
+      cb($reader.resultAsString)
+      redraw()
+    reader.readAsText(file)
+  click node
 
 
 proc parseHook*[K: not string, V](s: string, i: var int, v: var SomeTable[K, V]) =

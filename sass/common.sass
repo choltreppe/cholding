@@ -99,7 +99,7 @@ body
   justify-content: center
 
 
-#error-popup
+#popup
   position: absolute
   @each $side in [left, right, top, bottom]
     #{$side}: 0
@@ -121,7 +121,7 @@ body
     flex-direction: column
     justify-content: stretch
     padding: 1.6vmin
-    background-color: $color-error-ground
+    background-color: $color-element-subtle
     border-radius: 2.4vmin
     box-shadow: 0 2vmin 12vmin rgb(0, 0, 0.2)
 
@@ -131,15 +131,32 @@ body
     > .title
       font-size: $font-size-big
       font-weight: bold
-      border-bottom: solid 1px $color-error-outline
+      border-bottom: solid 1px $color-element-strong
 
     > .content
       padding-top: 1.6vmin
+
+      > .buttons
+        display: flex
+        flex-direction: row
+        margin: -1vmin
+        margin-top: 1vmin
+        > button
+          margin: 1vmin
 
     > button.close
       position: absolute
       top: -1.5vmin
       right: 1vmin
+      background-color: $color-highlight
+      &::after
+        @include recolor($color-ground)
+
+    &.error
+      background-color: $color-error-ground
+
+      > .title
+        border-color: $color-error-outline
 
 
 // -------- widgets --------
@@ -192,21 +209,6 @@ input[type="text"]
 
   &.error
     background-color: $color-error-ground
-
-.open-file-button
-  position: relative
-  display: flex
-  flex-direction: column
-  align-items: stretch
-  justify-content: stretch
-
-  > input
-    position: absolute
-    @each $side in [left, right, top, bottom]
-      #{$side}: 0
-    opacity: 0
-    &:hover
-      cursor: pointer
 
 .info-box
   padding: 2vmin

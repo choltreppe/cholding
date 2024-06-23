@@ -1,32 +1,46 @@
-import std/options
+import std/[options, dom]
 import fusion/matching
 include karax/prelude
+import ./utils
 
 
-var errorPopupMsg: Option[tuple[title, msg: string]]
+var popupMsg: Option[tuple[
+  isError: bool,
+  title: string,
+  content: VNode
+]]
+
+proc setPopup*(title: string, content: VNode) =
+  popupMsg = some((false, title, content))
 
 proc setErrorPopup*(title, msg: string) =
-  errorPopupMsg = some((title, msg))
+  popupMsg = some((true, title, text msg))
 
-proc drawErrorPopup*: VNode =
-  if Some(@error) ?= errorPopupMsg:
-    buildHtml(tdiv(id = "error-popup")):
+proc closePopup* = popupMsg = none(typeof(popupMsg.get))
+
+proc drawPopup*: VNode =
+  if Some(@msg) ?= popupMsg:
+    var content = msg.content
+    if content.kind == VNodeKind.text:
+      content = buildHtml(tdiv): content
+    content.class = "content"
+
+    buildHtml(tdiv(id = "popup")):
       tdiv(class = "backdrop"):
-        proc onClick = errorPopupMsg = none((string, string))
-      tdiv(class = "msg"):
+        proc onClick = closePopup()
+      tdiv(class = "msg".addClassIf(msg.isError, "error")):
         tdiv(class = "title"):
-          text error.title
-        tdiv(class = "content"):
-          text error.msg
+          text msg.title
+        content
         button(class = "close"):
-          proc onClick = errorPopupMsg = none((string, string))
+          proc onClick = closePopup()
   
   else: text ""
 
 
 proc drawPage*(actions: seq[VNode], content: VNode): VNode =
   buildHtml(tdiv):
-    drawErrorPopup()
+    drawPopup()
     tdiv(id = "head"):
       tdiv(id = "logo"): text "CHOL CHORDING"  #TODO
       tdiv(id = "actions"):

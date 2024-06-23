@@ -46,6 +46,7 @@ type
     of true:
       layout: Layout
       view: LayoutEditView
+      hasUnsavedChanges: bool
     else: discard
 
 var self: LayoutEdit
@@ -53,13 +54,47 @@ var self: LayoutEdit
 converter toView(stage: LayoutEditStage): LayoutEditView =
   LayoutEditView(stage: stage)
 
-proc openLayout(json: string) =
-  if Some(@layout) ?= parseLayout(json):
-    self = LayoutEdit(
-      isOpen: true,
-      layout: layout,
-      view: chordConfig
-    )
+
+proc saveLayout
+proc withUnsavedChangesWarning(afterSave: proc()) =
+  if self.isOpen and self.hasUnsavedChanges:
+    setPopup("Unsaved Changes"): buildHtml(tdiv):
+      text "Save changes before closing?"
+      tdiv(class = "buttons"):
+        button(class = "secondary"):
+          text "don't save"
+          proc onClick =
+            afterSave()
+            closePopup()
+        button(class = "secondary"):
+          text "cancel"
+          proc onClick = closePopup()
+        button:
+          text "save"
+          proc onClick =
+            saveLayout()
+            afterSave()
+            closePopup()
+  else:
+    afterSave()
+
+proc newLayout =
+  withUnsavedChangesWarning do():
+    self = LayoutEdit(isOpen: true)
+
+proc openLayout =
+  withUnsavedChangesWarning do():
+    uploadFile do(content: string):
+      if Some(@layout) ?= parseLayout(content):
+        self = LayoutEdit(
+          isOpen: true,
+          layout: layout,
+          view: chordConfig
+        )
+
+proc saveLayout =
+  save self.layout
+  self.hasUnsavedChanges = false
 
 
 proc generateArduino(layout: Layout, pins: seq[Pin]): string =
@@ -106,10 +141,10 @@ proc drawDom*: VNode =
       buildHtml(tdiv(class = "main-menu")):
         button:
           text "new layout"
-          proc onClick =
-            self = LayoutEdit(isOpen: true)
-        drawOpenFileButton("open layout") do(content: string):
-          openLayout(content)
+          proc onClick = newLayout()
+        button:
+          text "open layout"
+          proc onClick = openLayout()
   
   else:
     var actions: seq[VNode]
@@ -126,16 +161,14 @@ proc drawDom*: VNode =
     if self.view.stage in basicKeyConfig .. chordConfig:
       actions.add: buildHtml(tdiv):
         button(class = "icon new-file", title = "new"):
-          proc onCLick = self = LayoutEdit(isOpen: true)
+          proc onCLick = newLayout()
 
-        drawOpenFileButton(
-          buildHtml(button(class = "icon open-file")),
-          proc(content: string) = openLayout(content)
-        ) 
+        button(class = "icon open-file"):
+          proc onClick = openLayout()
 
         if self.view.stage == chordConfig:
           button(class = "icon save", title = "save"):
-            proc onClick = save self.layout
+            proc onClick = saveLayout()
         else:
           button(
             class = "icon save disabled",
@@ -201,6 +234,7 @@ proc drawDom*: VNode =
                   value = $chord.outKey,
                   onKeyDown = registerKeyHandler(proc(key: OutKey) =
                     self.layout.chords[i].outKey = key
+                    self.hasUnsavedChanges = true
                   )
                 )
                 drawHands(self.layout.handSetup, isSmall=true) do(id: InKeyId) -> VNode:
@@ -209,15 +243,18 @@ proc drawDom*: VNode =
                   else:
                     drawKey(pressed = id in chord.inKeys) do (e: Event, n: VNode):
                       self.layout.chords[i].inKeys[id] = id notin self.layout.chords[i].inKeys
+                      self.hasUnsavedChanges = true
                 button(class = "close"):
                   proc onClick =
                     self.layout.chords.del(i)
+                    self.hasUnsavedChanges = true
               )
             button(class = "small"):
               text "+ add Chord"
               proc onClick =
                 self.layout.chords &= Chord()
                 self.view.justAddedChord = true
+                self.hasUnsavedChanges = true
       
       of pinConfig:
         buildHtml(tdiv(id = "pin-config")):
@@ -287,4 +324,4 @@ window.addEventListener("keydown") do(e: Event):
   if self.isOpen and e.ctrlKey and e.key == "s":
     e.preventDefault()
     if self.view.stage == chordConfig:
-      save self.layout
+      saveLayout()
