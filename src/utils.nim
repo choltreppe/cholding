@@ -13,6 +13,19 @@ proc getCookie*(name: string): Option[string] =
       return some(v)
 
 
+proc setRouter*(p: proc(route: string)) =
+  window.addEventListener("hashchange") do(_: Event):
+    var route = $window.location.hash
+    if len(route) > 0:
+      assert route[0] == '#'
+      route = route[1..^1]
+    p(route)
+    redraw()
+
+  window.onload = proc(_: Event) =
+    window.location.hash = ""
+
+
 proc downloadFile*(name, kind, content: string) =
   let node = document.createElement("a")
   node.setAttribute("href", cstring &"data:{kind};charset=utf-8,{encodeURIComponent(content)}")

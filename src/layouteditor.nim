@@ -54,6 +54,9 @@ var self: LayoutEdit
 converter toView(stage: LayoutEditStage): LayoutEditView =
   LayoutEditView(stage: stage)
 
+proc goto(stage: LayoutEditStage) =
+  window.location.hash = $stage
+
 
 proc saveLayout
 proc withUnsavedChangesWarning(afterSave: proc()) =
@@ -152,11 +155,7 @@ proc drawDom*: VNode =
     if self.view.stage == chordConfig:
       actions.add: buildHtml(button):
         text "Export Arduino"
-        proc onClick =
-          self.view = pinConfig
-          if Some(@pins) ?= getCookie("pins"):
-            self.view.pins = pins.fromJson(seq[Pin])
-          self.view.pins.setLen keyCount[self.layout.handSetup]
+        proc onClick = goto pinConfig
 
     if self.view.stage in basicKeyConfig .. chordConfig:
       actions.add: buildHtml(tdiv):
@@ -184,7 +183,7 @@ proc drawDom*: VNode =
               text $setup & " hand" & (if setup == bothHands: "s" else: "")
               proc onClick =
                 self.layout.handSetup = setup
-                self.view = basicKeyConfig
+                goto basicKeyConfig
             )
 
       of basicKeyConfig:
@@ -209,10 +208,7 @@ proc drawDom*: VNode =
           
           button:
             text "next"
-            proc onClick =
-              self.view = chordConfig
-              self.layout.chords.setLen 1
-              self.view.justAddedChord = true
+            proc onClick = goto chordConfig
 
       of chordConfig:
         let dupInKeys = self.layout.chords.mapIt(it.inKeys).duplicates
@@ -293,7 +289,7 @@ proc drawDom*: VNode =
           tdiv(class = "buttons"):
             button(class = "secondary"):
               text "cancel"
-              proc onClick = self.view = chordConfig
+              proc onClick = goto chordConfig
             if len(self.view.errorPinNames) == 0:
               button:
                 text "export"
@@ -303,7 +299,7 @@ proc drawDom*: VNode =
                     self.view.errorPinNames &= ""
                   if len(self.view.errorPinNames) == 0:
                     downloadFile("code.ino", "text/arduino", generateArduino(self.layout, self.view.pins))
-                    self.view = chordConfig
+                    goto chordConfig
             else:
               button(class = "disabled"):
                 text "export"
@@ -318,6 +314,32 @@ proc postDrawDom* =
       .InputElement
 
 setRenderer drawDom, clientPostRenderCallback = postDrawDom
+
+setRouter do(route: string):
+  if route == "":
+    self = LayoutEdit(isOpen: false)
+
+  elif not self.isOpen:
+    window.location.hash = ""
+
+  else:
+    self.view = parseEnum[LayoutEditStage](route)
+    case self.view.stage
+    of chordConfig:
+      if len(self.layout.chords) == 0:
+        self.layout.chords.setLen 1
+      block:
+        let keys = self.layout.basicKeys.keys.toSet
+        for chord in self.layout.chords.mitems:
+          chord.inKeys.excl keys
+      self.view.justAddedChord = true
+
+    of pinConfig:
+      if Some(@pins) ?= getCookie("pins"):
+        self.view.pins = pins.fromJson(seq[Pin])
+      self.view.pins.setLen keyCount[self.layout.handSetup]
+
+    else: discard
 
 window.addEventListener("keydown") do(e: Event):
   let e = e.KeyboardEvent

@@ -57,15 +57,6 @@ type
 var self: TypingPractice
 
 
-proc genLesson(id: int, config: LessonConfig) =
-  self.view = TypingPracticeView(kind: lesson, id: id)
-  for i in 0 ..< wordsPerText:
-    if i > 0:
-      self.view.text &= ' '
-    for _ in 0 ..< rand(lettersPerWord):
-      self.view.text &= sample(config.symbols)
-
-
 func getKeyLookup(basicKeys: Table[InKeyId, OutKey], chords: seq[Chord]): KeyLookup =
   for inKey, outKey in basicKeys:
     if not outKey.isSpecial:
@@ -100,6 +91,8 @@ proc openLayout =
           )
         i += newSymbolsPerLesson
 
+proc openLesson(id: int) =
+  window.location.hash = &"lesson{id}"
 
 proc drawDom*: VNode =
   drawPage(@[]):
@@ -114,8 +107,8 @@ proc drawDom*: VNode =
       of lessonSelect:
         buildHtml(tdiv(id = "typing-practice-select")):
           for i, config in self.lessons:
-            capture(i, config, buildHtml(tdiv) do:
-              proc onClick = genLesson(i, config)
+            capture(i, buildHtml(tdiv) do:
+              proc onClick = openLesson(i)
               tdiv(class = "title"):
                 text $config.kind
               tdiv(class = "hand"):
@@ -151,13 +144,31 @@ proc drawDom*: VNode =
               text "next"
               proc onClick =
                 let id = self.view.lessonId
-                genLesson(id+1, self.lessons[id+1])
+                openLesson(id+1)
           else:
             button:
               text "menu"
-              proc onClick = self.view = TypingPracticeView(kind: lessonSelect)
+              proc onClick = window.location.hash = ""
 
 setRenderer drawDom
+
+setRouter do(route: string):
+  if route == "":
+    if self.isOpen:
+      self.view = TypingPracticeView(kind: lessonSelect)
+
+  elif not self.isOpen:
+    window.location.hash = ""
+
+  elif route.startsWith("lesson"):
+    let id = parseInt(route[6..^1])
+    let config = self.lessons[id]
+    self.view = TypingPracticeView(kind: lesson, id: id)
+    for i in 0 ..< wordsPerText:
+      if i > 0:
+        self.view.text &= ' '
+      for _ in 0 ..< rand(lettersPerWord):
+        self.view.text &= sample(config.symbols)
 
 window.addEventListener("keydown") do(e: Event):
   let e = e.KeyboardEvent

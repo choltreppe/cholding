@@ -42,7 +42,10 @@ proc drawPage*(actions: seq[VNode], content: VNode): VNode =
   buildHtml(tdiv):
     drawPopup()
     tdiv(id = "head"):
-      tdiv(id = "logo"): text "CHOL CHORDING"  #TODO
+      tdiv(id = "logo"):
+        text "CHOL CHORDING"  #TODO
+        proc onClick =
+          window.location.hash = ""
       tdiv(id = "actions"):
         for action in actions: action
     tdiv(id = "content"): content
