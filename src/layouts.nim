@@ -108,9 +108,12 @@ proc drawKey*(pressed = false, onClick: EventHandler = nil): VNode =
   if onClick != nil:
     result.addEventHandler(EventKind.onClick, onClick)
 
-proc drawKey*(key: OutKey): VNode =
+proc drawKey*(key: string): VNode =
   buildHtml(tdiv(class = "key labeled")):
-    tdiv: text $key
+    tdiv: text key
+
+proc drawKey*(key: OutKey): VNode =
+  drawKey($key)
 
 proc drawKeyWithCb(key, class: string, cb: proc(key: OutKey)): VNode {.inline.} =
   buildHtml(tdiv(
