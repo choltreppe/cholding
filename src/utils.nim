@@ -18,7 +18,7 @@ proc setRouter*(p: proc(route: string)) =
     var route = $window.location.hash
     if len(route) > 0:
       assert route[0] == '#'
-      route = route[1..^1]
+      route = $route[1..^1].decodeURIComponent
     p(route)
     redraw()
 

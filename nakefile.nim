@@ -13,7 +13,7 @@ task "buildCss", "compile sass":
     direShell &"sassc sass/{page}.sass build/{page}.css"
 
 task "buildHtml", "generate html index pages":
-  const templ = readFile("index.html")
+  const templ = readFile("template.html")
   for page in pages:
     writeFile(&"build/{page}.html", templ % ["page", $page])
 

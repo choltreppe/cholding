@@ -8,6 +8,18 @@
 
 @import 'vars'
 
+
+#open-lesson-select
+  align-self: center
+  @each $dim in [width, height]
+    #{$dim}: 0.6*$head-height
+  margin-left: 0.2*$head-height
+  background: url(img/menu.svg) center no-repeat
+  background-size: contain
+  @include recolor($color-on-ground)
+  &:hover
+    cursor: pointer
+
   
 .practice-text
   align-self: center
@@ -16,25 +28,29 @@
   align-items: center
 
   > .text
+    max-width: 75vmax
     align-self: stretch
     display: flex
     flex-wrap: wrap
     align-items: stretch
     margin-bottom: 16vh
 
-    > .symbol
-      font-size: $font-size-big
-      padding: 0.8vmin 1vmin
-      margin-bottom: 0.4vmin
-      margin-right: 2px
-      border-bottom: solid 0.3vmin transparent
-      
-      &.cursor
-        border-color: $color-element-strong
-        background-color: $color-element-subtle
+    > *
+      display: flex
 
-      &.failed
-        background-color: $color-error-ground
+      > .symbol
+        font-size: 3vmin
+        padding: 0.3vmin 0.5vmin
+        margin-bottom: 0.3vmin
+        margin-right: 2px
+        border-bottom: solid 0.3vmin transparent
+        
+        &.cursor
+          border-color: $color-element-strong
+          background-color: $color-element-subtle
+
+        &.failed
+          background-color: $color-error-ground
   
   .key:hover
     cursor: auto

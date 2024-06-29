@@ -8,6 +8,54 @@
 
 @import 'vars'
 
+
+#stage-overview
+  align-self: center
+  $height: $head-height*0.6
+  height: $height
+  display: flex
+
+  .stage
+    position: relative
+    display: flex
+    align-items: center
+    padding-right: 1.6vmin
+    padding-left: 1.6vmin + $height/2
+    margin-left: $height/2
+    font-weight: 200
+
+    &::before, &::after
+      content: ""
+      display: block
+      position: absolute
+      border: solid ($height/2) transparent
+      top: 0
+
+    &::before
+      border-left-color: $color-ground
+      left: 0
+    
+    &::after
+      right: 0
+      transform: translateX(100%)
+  
+    @mixin stage-color($color)
+      background-color: $color
+      &::after
+        border-left-color: $color
+
+    @include stage-color($color-element-subtle)
+
+    &.selected
+      @include stage-color($color-element-strong)
+      font-weight: normal
+    
+    &.disabled
+      color: $color-element-strong
+
+    &:not(.selected, .disabled):hover
+      cursor: pointer
+
   
 #basic-key-config
   align-self: center
@@ -81,27 +129,37 @@
   flex-direction: column
   align-items: stretch
 
-  > div
+  > .pins
     display: flex
     align-items: flex-end
 
-  .row-labels
-    display: flex
-    flex-direction: column
-    align-items: flex-end
-    width: 0
-    white-space: nowrap
-    overflow: visible
+    > .row-labels
+      display: flex
+      flex-direction: column
+      align-items: flex-end
+      width: 0
+      white-space: nowrap
+      overflow: visible
 
-    > div
-      color: $color-element-strong
-      margin-right: 1vmin
-      // positioning hardcoded (not so elegant :/ but it works)
-      &:first-child
-        margin-bottom: 3.8vmin
-      &:last-child
-        margin-bottom: 2.2vmin
-  
+      > div
+        color: $color-element-strong
+        margin-right: 1vmin
+        // positioning hardcoded (not so elegant :/ but it works)
+        &:first-child
+          margin-bottom: 3.8vmin
+        &:last-child
+          margin-bottom: 2.2vmin
+
+  > .locale
+    display: flex
+    flex-direction: row
+    align-items: center
+    margin-top: 4vmin
+
+    > input
+      padding: 1vmin
+      margin-left: 2vmin
+ 
   .hand
     align-items: stretch
 
@@ -149,7 +207,3 @@
         > :last-child
           border-top-left-radius: 0
           border-top-right-radius: 0
-  
-  > .buttons
-    justify-content: space-between
-    margin-top: 10vmin

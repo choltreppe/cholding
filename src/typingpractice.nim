@@ -75,7 +75,12 @@ proc openLayout =
         keyLookup: getKeyLookup(layout.basicKeys, layout.chords),
         view: TypingPracticeView(kind: lessonSelect)
       )
-      let symbols = symbolOrder.filterIt(it in self.keyLookup)
+      let oneKeySymbols = collect:
+        for s, k in self.keyLookup:
+          if len(k) == 1: s
+      let symbols =
+        symbolOrder.filterIt(it in oneKeySymbols) &
+        symbolOrder.filterIt(it in self.keyLookup and it notin oneKeySymbols)
       var i = 0
       while i < len(symbols):
         let upto = min(i + newSymbolsPerLesson, len(symbols))
@@ -91,24 +96,42 @@ proc openLayout =
           )
         i += newSymbolsPerLesson
 
-proc openLesson(id: int) =
+proc gotoLesson(id: int) =
   window.location.hash = &"lesson{id}"
 
+proc loadLesson(id: int) =
+  let config = self.lessons[id]
+  self.view = TypingPracticeView(kind: lesson, id: id)
+  for i in 0 ..< wordsPerText:
+    if i > 0:
+      self.view.text &= ' '
+    for _ in 0 ..< rand(lettersPerWord):
+      self.view.text &= sample(config.symbols)
+
 proc drawDom*: VNode =
-  drawPage(@[]):
-    if not self.isOpen:
-      buildHtml(tdiv(class = "main-menu")):
+  if not self.isOpen:
+    drawPage:
+      tdiv(class = "main-menu"):
         button:
           text "open layout"
           proc onClick = openLayout()
 
-    else:
+  else:
+    drawPage do:
+      tdiv(id = "open-lesson-select"):
+        proc onClick = window.location.hash = ""
+      tdiv(id = "actions"):
+        tdiv:
+          button(class = "icon open-file"):
+            proc onClick = openLayout()
+    
+    do:
       case self.view.kind
       of lessonSelect:
         buildHtml(tdiv(id = "typing-practice-select")):
           for i, config in self.lessons:
             capture(i, buildHtml(tdiv) do:
-              proc onClick = openLesson(i)
+              proc onClick = gotoLesson(i)
               tdiv(class = "title"):
                 text $config.kind
               tdiv(class = "hand"):
@@ -119,13 +142,19 @@ proc drawDom*: VNode =
       of lesson:
         buildHtml(tdiv(class = "practice-text")):
           tdiv(class = "text"):
+            var word = newVNode(tdiv)
             for i, symbol in enumerate(self.view.text.utf8):
-              tdiv(class =
+              (word.add(buildHtml(pre(class =
                 "symbol"
                 .addClassIf(i == self.view.pos, "cursor")
                 .addClassIf(i in self.view.fails, "failed")
-              ):
+              )) do:
                 text symbol
+              ))
+              if symbol == " ":
+                word
+                (word = newVNode(tdiv))
+            word
           
           let keys = self.keyLookup[self.view.text.runeStrAtPos(self.view.pos)]
           drawHands(self.handSetup, isSmall=false) do(id: InKeyId) -> VNode:
@@ -139,16 +168,19 @@ proc drawDom*: VNode =
       of lessonStats:
         buildHtml(tdiv(id = "lesson-stats")):
           text &"{self.view.percent}% correct"
-          if self.view.lessonId < high(self.lessons):
-            button:
-              text "next"
-              proc onClick =
-                let id = self.view.lessonId
-                openLesson(id+1)
-          else:
-            button:
+          tdiv(class = "buttons"):
+            button(class = "secondary"):
+              text "redo"
+              proc onClick = loadLesson(self.view.lessonId)
+            button(class = "secondary"):
               text "menu"
               proc onClick = window.location.hash = ""
+            if self.view.lessonId < high(self.lessons):
+              button:
+                text "next"
+                proc onClick =
+                  let id = self.view.lessonId
+                  gotoLesson(id+1)
 
 setRenderer drawDom
 
@@ -156,31 +188,31 @@ setRouter do(route: string):
   if route == "":
     if self.isOpen:
       self.view = TypingPracticeView(kind: lessonSelect)
-
   elif not self.isOpen:
     window.location.hash = ""
-
   elif route.startsWith("lesson"):
-    let id = parseInt(route[6..^1])
-    let config = self.lessons[id]
-    self.view = TypingPracticeView(kind: lesson, id: id)
-    for i in 0 ..< wordsPerText:
-      if i > 0:
-        self.view.text &= ' '
-      for _ in 0 ..< rand(lettersPerWord):
-        self.view.text &= sample(config.symbols)
+    loadLesson(parseInt(route[6..^1]))
 
 window.addEventListener("keydown") do(e: Event):
   let e = e.KeyboardEvent
-  if self.isOpen and self.view.kind == lesson:
-    if $e.key != self.view.text.runeStrAtPos(self.view.pos):
-      self.view.fails &= self.view.pos
-    inc self.view.pos
-    let l = runeLen(self.view.text)
-    if self.view.pos >= l:
-      self.view = TypingPracticeView(
-        kind: lessonStats,
-        lessonId: self.view.id,
-        percent: (l-len(self.view.fails))*100 div l
-      )
-    redraw()
+  if self.isOpen:
+    case self.view.kind
+    of lesson:
+      if $e.key != self.view.text.runeStrAtPos(self.view.pos):
+        self.view.fails &= self.view.pos
+      inc self.view.pos
+      let l = runeLen(self.view.text)
+      if self.view.pos >= l:
+        self.view = TypingPracticeView(
+          kind: lessonStats,
+          lessonId: self.view.id,
+          percent: (l-len(self.view.fails))*100 div l
+        )
+      redraw()
+    
+    of lessonStats:
+      if $e.key == " " or e.keyCode == 13:
+        [@buttons] := document.getElementsByClass("buttons")
+        click buttons.childNodes[^1].Element
+
+    else: discard

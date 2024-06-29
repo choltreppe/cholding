@@ -25,9 +25,9 @@ type
     pins: seq[Pin]
 
   LayoutEditStage = enum
-    handSetupSelect
-    basicKeyConfig
-    chordConfig
+    handSetupSelect = "hand setup"
+    basicKeyConfig = "normal keys"
+    chordConfig = "chords"
     pinConfig
 
   LayoutEditView = object
@@ -39,6 +39,7 @@ type
     of pinConfig:
       pins: seq[Pin]
       errorPinNames: seq[string]
+      locale: string
     else: discard
 
   LayoutEdit* = object
@@ -100,7 +101,11 @@ proc saveLayout =
   self.hasUnsavedChanges = false
 
 
-proc generateArduino(layout: Layout, pins: seq[Pin]): string =
+proc generateArduino(
+  layout: Layout,
+  pins: seq[Pin],
+  locale: string
+): string =
   func toArduinoKey(key: OutKey): string =
     if key.isSpecial:
       case key.key
@@ -122,6 +127,7 @@ proc generateArduino(layout: Layout, pins: seq[Pin]): string =
 
   const templ = staticRead("template.ino")
   templ % [
+    "locale", locale.replace('-', '_'),
     "key_count", $keyCount[layout.handSetup],
     "key_pins", "{" & pins.mapIt(it.name).join(", ") & "}",
     "key_levels", "{" & pins.mapIt($it.connectedTo).join(", ") & "}",
@@ -140,8 +146,8 @@ proc generateArduino(layout: Layout, pins: seq[Pin]): string =
 
 proc drawDom*: VNode =
   if not self.isOpen:
-    drawPage(@[]):
-      buildHtml(tdiv(class = "main-menu")):
+    drawPage:
+      tdiv(class = "main-menu"):
         button:
           text "new layout"
           proc onClick = newLayout()
@@ -150,31 +156,44 @@ proc drawDom*: VNode =
           proc onClick = openLayout()
   
   else:
-    var actions: seq[VNode]
+    drawPage do:
+      tdiv(id = "stage-overview"):
+        for stage in handSetupSelect .. chordConfig:
+          if stage == self.view.stage:
+            tdiv(class = "stage selected"): text $stage
+          elif stage == handSetupSelect:
+            tdiv(class = "stage disabled"): text $stage
+          else:
+            capture(stage, buildHtml(tdiv(class = "stage")) do:
+              text $stage
+              if self.view.stage != handSetupSelect:
+                proc onClick = goto stage
+            )
 
-    if self.view.stage == chordConfig:
-      actions.add: buildHtml(button):
-        text "Export Arduino"
-        proc onClick = goto pinConfig
-
-    if self.view.stage in basicKeyConfig .. chordConfig:
-      actions.add: buildHtml(tdiv):
-        button(class = "icon new-file", title = "new"):
-          proc onCLick = newLayout()
-
-        button(class = "icon open-file"):
-          proc onClick = openLayout()
-
+      tdiv(id = "actions"):
         if self.view.stage == chordConfig:
-          button(class = "icon save", title = "save"):
-            proc onClick = saveLayout()
-        else:
-          button(
-            class = "icon save disabled",
-            title = "not all steps done"
-          )
+          button:
+            text "Export Arduino"
+            proc onClick = goto pinConfig
 
-    drawPage(actions):
+        if self.view.stage in basicKeyConfig .. chordConfig:
+          tdiv:
+            button(class = "icon new-file", title = "new"):
+              proc onCLick = newLayout()
+
+            button(class = "icon open-file"):
+              proc onClick = openLayout()
+
+            if self.view.stage == chordConfig:
+              button(class = "icon save", title = "save"):
+                proc onClick = saveLayout()
+            else:
+              button(
+                class = "icon save disabled",
+                title = "not all steps done"
+              )
+
+    do:
       case self.view.stage
       of handSetupSelect:
         buildHtml(tdiv(class = "main-menu")):
@@ -254,7 +273,7 @@ proc drawDom*: VNode =
       
       of pinConfig:
         buildHtml(tdiv(id = "pin-config")):
-          tdiv:
+          tdiv(class = "pins"):
             tdiv(class = "row-labels"):
               tdiv: text "pin:"
               tdiv: text "connected to:"
@@ -286,6 +305,13 @@ proc drawDom*: VNode =
                           self.view.pins[id].connectedTo = level
                           setCookie("pins", self.view.pins.toJson)
                       )
+          tdiv(class = "locale"):
+            text "locale:"
+            input(`type` = "text", value = self.view.locale):
+              proc onInput(_: Event, n: VNode) =
+                self.view.locale = strip($n.value)
+                setCookie("locale", self.view.locale)
+
           tdiv(class = "buttons"):
             button(class = "secondary"):
               text "cancel"
@@ -298,7 +324,11 @@ proc drawDom*: VNode =
                   if self.view.pins.anyIt(it.name == ""):
                     self.view.errorPinNames &= ""
                   if len(self.view.errorPinNames) == 0:
-                    downloadFile("code.ino", "text/arduino", generateArduino(self.layout, self.view.pins))
+                    downloadFile(
+                      "code.ino",
+                      "text/arduino",
+                      generateArduino(self.layout, self.view.pins, self.view.locale)
+                    )
                     goto chordConfig
             else:
               button(class = "disabled"):
@@ -312,6 +342,8 @@ proc postDrawDom* =
       .querySelectorAll("#chords > .chord")[^1]
       .getElementsByClass("out-key")[0]
       .InputElement
+    let content = document.getElementById("content-container")
+    content.scrollTop = content.scrollHeight
 
 setRenderer drawDom, clientPostRenderCallback = postDrawDom
 
@@ -338,6 +370,9 @@ setRouter do(route: string):
       if Some(@pins) ?= getCookie("pins"):
         self.view.pins = pins.fromJson(seq[Pin])
       self.view.pins.setLen keyCount[self.layout.handSetup]
+      self.view.locale =
+        if Some(@locale) ?= getCookie("locale"): locale
+        else: "en_US"
 
     else: discard
 

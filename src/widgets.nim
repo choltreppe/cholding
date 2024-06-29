@@ -38,14 +38,20 @@ proc drawPopup*: VNode =
   else: text ""
 
 
-proc drawPage*(actions: seq[VNode], content: VNode): VNode =
+template drawPage*(head, content): VNode =
   buildHtml(tdiv):
     drawPopup()
-    tdiv(id = "head"):
-      tdiv(id = "logo"):
-        text "CHOL CHORDING"  #TODO
-        proc onClick =
-          window.location.hash = ""
-      tdiv(id = "actions"):
-        for action in actions: action
-    tdiv(id = "content"): content
+    tdiv(id = "head"): head
+    tdiv(id = "content-container"):
+      tdiv(id = "content-footer"):
+        tdiv(id = "content"): content
+        tdiv(id = "footer"):
+          tdiv(class = "links"):
+            a(href = "https://github.com/choltreppe/cholchording", target = "_blank"):
+              text "source code"
+            a(href = "/imprint", target = "_blank"):
+              text "imprint"
+          tdiv(class = "copyright"):
+            text "©2024 Joël Lienhard"
+
+template drawPage*(content): VNode = drawPage((discard), content)
