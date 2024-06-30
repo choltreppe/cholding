@@ -12,7 +12,7 @@ const t_keys chord_mask = $chord_mask;
 char chords[1 << KEY_COUNT] = {0};
 
 
-#define DEBOUNCE_DELAY 40
+#define DEBOUNCE_DELAY 60
 
 t_keys keys_pressed = 0;  // bit array 
 char prev_modifier = 0;  // for implementing modifier release on doublepress (0 if released)
