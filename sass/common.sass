@@ -257,8 +257,11 @@ input[type="text"]
 
   > :not(:first-child)
     margin-top: $font-size-big*1.4
+
+  > a
+    @extend button
   
-  button
+  > *
     background-color: $color-element-subtle
     color: $color-on-ground
     font-size: $font-size-big

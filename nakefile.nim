@@ -22,13 +22,14 @@ task "buildJs", "compile nim code to js":
       direShell "mv", outPathMin, outPath
 
 task "buildCss", "compile sass":
-  for page in "common" & pages:
+  for page in @["common", "index"] & pages:
     direShell &"sassc sass/{page}.sass build/{page}.css"
 
 task "buildHtml", "generate html index pages":
   const templ = readFile("template.html")
   for page in pages:
     writeFile(&"build/{page}.html", templ % ["page", $page])
+  direShell "nim e src/index.nims"
 
 task "build", "build all":
   runTask "buildJs"
