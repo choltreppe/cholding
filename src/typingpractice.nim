@@ -6,7 +6,7 @@
 #    distribution, for details about the copyright.
 #
 
-import std/[options, tables, strformat, setutils, sequtils, unicode, sugar, dom, enumerate, random]
+import std/[options, tables, strutils, strformat, setutils, sequtils, unicode, sugar, dom, enumerate, random]
 import fusion/matching
 include karax/prelude
 import jsony
@@ -23,13 +23,16 @@ const
 type
   KeyLookup = Table[string, set[InKeyId]]
 
-  LessonKind = enum practiceJust="just", practiceUpto="upto"
+  LessonKind = enum
+    practiceJust="just",
+    practiceUpto="upto",
+    practiceNumbers="numbers"
 
   LessonConfig = object
     symbols: seq[string]
     case kind: LessonKind
-    of practiceJust: discard
     of practiceUpto: newSymbols: seq[string]
+    else: discard
 
   TypingPracticeViewKind = enum lessonSelect, lesson, lessonStats
   TypingPracticeView = object
@@ -65,6 +68,33 @@ func getKeyLookup(basicKeys: Table[InKeyId, OutKey], chords: seq[Chord]): KeyLoo
     if not chord.outKey.isSpecial:
       result[$chord.outKey.c] = chord.inKeys
 
+func getLessonConfigs(keyLookup: KeyLookup): seq[LessonConfig] =
+  let oneKeySymbols = collect:
+    for s, k in keyLookup:
+      if len(k) == 1: s
+  let symbols =
+    symbolOrder.filterIt(it in oneKeySymbols) &
+    symbolOrder.filterIt(it in keyLookup and it notin oneKeySymbols)
+  var i = 0
+  while i < len(symbols):
+    let upto = min(i + newSymbolsPerLesson, len(symbols))
+    result &= LessonConfig(
+      kind: practiceJust,
+      symbols: symbols[i ..< upto]
+    )
+    if i > 0:
+      result &= LessonConfig(
+        kind: practiceUpto,
+        symbols: symbols[0 ..< upto],
+        newSymbols: symbols[i ..< upto]
+      )
+    i += newSymbolsPerLesson
+  const numbers = "1234567890"
+  result &= LessonConfig(
+    kind: practiceNumbers,
+    symbols: numbers.mapIt($it).filterIt(it in keyLookup)
+  )
+
 proc openLayout =
   uploadFile do(content: string):
     if Some(@layout) ?= parseLayout(content):
@@ -75,26 +105,7 @@ proc openLayout =
         keyLookup: getKeyLookup(layout.basicKeys, layout.chords),
         view: TypingPracticeView(kind: lessonSelect)
       )
-      let oneKeySymbols = collect:
-        for s, k in self.keyLookup:
-          if len(k) == 1: s
-      let symbols =
-        symbolOrder.filterIt(it in oneKeySymbols) &
-        symbolOrder.filterIt(it in self.keyLookup and it notin oneKeySymbols)
-      var i = 0
-      while i < len(symbols):
-        let upto = min(i + newSymbolsPerLesson, len(symbols))
-        self.lessons &= LessonConfig(
-          kind: practiceJust,
-          symbols: symbols[i ..< upto]
-        )
-        if i > 0:
-          self.lessons &= LessonConfig(
-            kind: practiceUpto,
-            symbols: symbols[0 ..< upto],
-            newSymbols: symbols[i ..< upto]
-          )
-        i += newSymbolsPerLesson
+      self.lessons = getLessonConfigs(self.keyLookup)
 
 proc gotoLesson(id: int) =
   window.location.hash = &"lesson{id}"
@@ -104,9 +115,13 @@ proc loadLesson(id: int) =
   self.view = TypingPracticeView(kind: lesson, id: id)
   for i in 0 ..< wordsPerText:
     if i > 0:
+      if "," in self.keyLookup and rand(6) == 0:
+        self.view.text &= ','
       self.view.text &= ' '
     for _ in 0 ..< rand(lettersPerWord):
       self.view.text &= sample(config.symbols)
+  if "." in self.keyLookup:
+    self.view.text &= '.'
 
 proc drawDom*: VNode =
   if not self.isOpen:
@@ -134,10 +149,11 @@ proc drawDom*: VNode =
               proc onClick = gotoLesson(i)
               tdiv(class = "title"):
                 text $config.kind
-              tdiv(class = "hand"):
-                for symbol in (if config.kind == practiceUpto: config.newSymbols else: config.symbols):
-                  drawKey(symbol)
-              )
+              if config.kind in [practiceJust, practiceUpto]:
+                tdiv(class = "hand"):
+                  for symbol in (if config.kind == practiceUpto: config.newSymbols else: config.symbols):
+                    drawKey(symbol)
+            )
 
       of lesson:
         buildHtml(tdiv(class = "practice-text")):
