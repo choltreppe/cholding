@@ -159,6 +159,8 @@ proc drawDom*: VNode =
   
   else:
     drawPage do:
+      drawHomeButton()
+
       tdiv(id = "stage-overview"):
         for stage in handSetupSelect .. chordConfig:
           if stage == self.view.stage:

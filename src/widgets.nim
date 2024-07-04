@@ -42,6 +42,13 @@ else:
   import karax/[vdom, karaxdsl]
   proc drawPopup*: VNode = text ""
 
+proc drawHomeButton*: VNode =
+  buildHtml(a(
+    id = "home",
+    href = "index.html",
+    title = "home"
+  ))
+
 template drawPage*(head, content): VNode =
   buildHtml(tdiv):
     drawPopup()
@@ -58,4 +65,8 @@ template drawPage*(head, content): VNode =
           tdiv(class = "copyright"):
             text "©2024 Joël Lienhard"
 
-template drawPage*(content): VNode = drawPage((discard), content)
+template drawPage*(content): VNode =
+  drawPage do:
+    drawHomeButton()
+  do:
+    content

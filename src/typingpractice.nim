@@ -133,8 +133,12 @@ proc drawDom*: VNode =
 
   else:
     drawPage do:
-      tdiv(id = "open-lesson-select"):
-        proc onClick = window.location.hash = ""
+      if self.view.kind == lessonSelect:
+        drawHomeButton()
+      else:
+        tdiv(id = "open-lesson-select"):
+          proc onClick = window.location.hash = ""
+
       tdiv(id = "actions"):
         tdiv:
           button(class = "icon open-file"):
