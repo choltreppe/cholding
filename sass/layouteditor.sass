@@ -56,6 +56,15 @@
     &:not(.selected, .disabled):hover
       cursor: pointer
 
+
+#thumb-keys-count-config
+  display: flex
+  flex-direction: column
+  align-items: flex-start
+  
+  > button
+    align-self: flex-end
+    margin-top: 8vh
   
 #basic-key-config
   align-self: center
@@ -149,16 +158,6 @@
           margin-bottom: 3.8vmin
         &:last-child
           margin-bottom: 2.2vmin
-
-  > .locale
-    display: flex
-    flex-direction: row
-    align-items: center
-    margin-top: 4vmin
-
-    > input
-      padding: 1vmin
-      margin-left: 2vmin
  
   .hand
     align-items: stretch
@@ -168,10 +167,6 @@
       display: flex
       flex-direction: column
       align-items: center
-
-      > .key:hover
-        cursor: auto
-        outline: none
 
       > .line
         width: 1px

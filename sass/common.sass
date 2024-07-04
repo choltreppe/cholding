@@ -229,18 +229,29 @@ button.close
   > button
     margin: 1vmin
 
-input[type="text"]
+input[type="text"], input[type="number"]
   border-radius: 1.2vmin
   border: none
   background-color: $color-element-subtle
   color: $color-on-ground
   text-align: center
 
+  &.error
+    background-color: $color-error-ground
+
+input[type="text"]
   &:focus, &:hover
     outline: solid 1px $color-on-ground
 
-  &.error
-    background-color: $color-error-ground
+.labeled-textinput
+  display: flex
+  flex-direction: row
+  align-items: center
+  margin-top: 4vmin
+
+  > input
+    padding: 1vmin
+    margin: 0 2vmin
 
 .info-box
   padding: 2vmin
@@ -278,17 +289,15 @@ input[type="text"]
 
   // have to do this because cant do margins in % of own size and box-shadow does not accept %-values
   @mixin key-size($size)
-  
-    // thumb
-    &.left > :last-child, &.right > :first-child
-      margin-top: 0.9*$size
-
-    // little finger
-    &.left > :first-child, &.right > :last-child
-      margin-top: 0.6*$size
 
     &:last-child
       margin-left: 0.8*$size
+
+    > .thumb
+      margin-top: 0.9*$size !important
+
+    > .smallfinger
+      margin-top: 0.6*$size !important
 
     .key
       width: $size
@@ -332,8 +341,9 @@ input[type="text"]
       @include key-color($color-element-strong, $color-highlight)
 
     &:hover, &:focus, .selected
-      cursor: pointer
-      outline: solid 1px $color-on-ground
+      &:not(.noclick)
+        cursor: pointer
+        outline: solid 1px $color-on-ground
 
 .hands
   display: flex

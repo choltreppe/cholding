@@ -32,6 +32,8 @@ type
 
   LayoutEditView = object
     case stage: LayoutEditStage
+    of handSetupSelect:
+      kindSelected: bool
     of basicKeyConfig:
       selected: Option[InKeyId]
     of chordConfig:
@@ -128,19 +130,19 @@ proc generateArduino(
   const templ = staticRead("template.ino")
   templ % [
     "locale", locale.replace('-', '_'),
-    "key_count", $keyCount[layout.handSetup],
+    "key_count", $layout.handSetup.keyCount,
     "key_pins", "{" & pins.mapIt(it.name).join(", ") & "}",
     "key_levels", "{" & pins.mapIt($it.connectedTo).join(", ") & "}",
     "basic_keys", "{" & collect(
-      for i in 0 ..< keyCount[layout.handSetup]:
+      for i in 0 ..< layout.handSetup.keyCount:
         if i in layout.basicKeys:
           layout.basicKeys[i].toArduinoKey
         else: "0"
     ).join(", ") & "}",
-    "chord_mask", layout.basicKeys.keys.toSet.complement.toBinNum,
+    "chord_mask", layout.basicKeys.keys.toSet.complement.toBinNum(layout.handSetup.keyCount),
     "init_chords",
       layout.chords
-      .mapIt("chords[" & it.inKeys.toBinNum & "] = " & it.outKey.toArduinoKey & ";")
+      .mapIt("chords[" & it.inKeys.toBinNum(layout.handSetup.keyCount) & "] = " & it.outKey.toArduinoKey & ";")
       .join("\n  ")
   ]
 
@@ -196,14 +198,36 @@ proc drawDom*: VNode =
     do:
       case self.view.stage
       of handSetupSelect:
-        buildHtml(tdiv(class = "main-menu")):
-          for setup in HandSetup:
-            capture(setup, buildHtml(button) do:
-              text $setup & " hand" & (if setup == bothHands: "s" else: "")
-              proc onClick =
-                self.layout.handSetup = setup
-                goto basicKeyConfig
-            )
+        if not self.view.kindSelected:
+          buildHtml(tdiv(class = "main-menu")):
+            for kind in HandSetupKind:
+              capture(kind, buildHtml(button) do:
+                text $kind & " hand" & (if kind == bothHands: "s" else: "")
+                proc onClick =
+                  self.layout.handSetup.kind = kind
+                  self.view.kindSelected = true
+              )
+
+        else:
+          buildHtml(tdiv(id = "thumb-keys-count-config")):
+            drawHands(self.layout.handSetup, isSmall=false) do(_: InKeyId) -> VNode:
+              drawKey()
+            tdiv(class = "labeled-textinput"):
+              input(
+                `type` = "number",
+                min = $low(ThumbKeysCount),
+                max = $high(ThumbKeysCount),
+                value = $self.layout.handSetup.thumbKeys,
+                size = "5"
+              ):
+                proc onInput(_: Event, n: VNode) =
+                  self.layout.handSetup.thumbKeys =
+                    parseInt($n.dom.value).ThumbKeysCount
+              text "thumb keys"
+
+            button:
+              text "next"
+              proc onClick = goto basicKeyConfig
 
       of basicKeyConfig:
         buildHtml(tdiv(id = "basic-key-config")):
@@ -305,7 +329,7 @@ proc drawDom*: VNode =
                           self.view.pins[id].connectedTo = level
                           setCookie("pins", self.view.pins.toJson)
                       )
-          tdiv(class = "locale"):
+          tdiv(class = "labeled-textinput"):
             text "locale:"
             input(`type` = "text", value = self.view.locale):
               proc onInput(_: Event, n: VNode) =
@@ -369,7 +393,7 @@ setRouter do(route: string):
     of pinConfig:
       if Some(@pins) ?= getCookie("pins"):
         self.view.pins = pins.fromJson(seq[Pin])
-      self.view.pins.setLen keyCount[self.layout.handSetup]
+      self.view.pins.setLen self.layout.handSetup.keyCount
       self.view.locale =
         if Some(@locale) ?= getCookie("locale"): locale
         else: "en_US"

@@ -81,9 +81,9 @@ proc dumpHook*[K: not string, V](s: var string, v: Table[K, V]) =
   s.add '}'
 
 
-func toBinNum*[T](s: set[T]): string =
+func toBinNum*[T](s: set[T], len: int): string =
   result = "0b"
-  for i in countdown(high(T), low(T)):
+  for i in countdown(len-1, 0):
     result.add:
       if i in s: "1"
       else: "0"

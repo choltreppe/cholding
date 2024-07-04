@@ -6,7 +6,7 @@
 #    distribution, for details about the copyright.
 #
 
-import std/[options, tables, strutils, sugar, dom]
+import std/[options, tables, strformat, strutils, sequtils, sugar, dom, algorithm]
 import fusion/matching
 include karax/prelude
 import jsony
@@ -35,20 +35,23 @@ type
     of false: c*: char
     of true: key*: SpecialKey
 
-  InKeyId* = range[0..9]  # max 10 keys (both hands)
+  ThumbKeysCount* = range[1..3]
+
+  InKeyId* = range[0 .. 7+2*high(ThumbKeysCount)]  # max keys for both hands
 
   Chord* = object
     inKeys*: set[InKeyId]
     outKey*: OutKey
 
-  HandSetup* = enum leftHand="left", rightHand="right", bothHands="both"
+  HandSetupKind* = enum leftHand="left", rightHand="right", bothHands="both"
+  HandSetup* = object
+    kind*: HandSetupKind
+    thumbKeys*: ThumbKeysCount = 1
 
   Layout* = object
     handSetup*: HandSetup
     basicKeys*: Table[InKeyId, OutKey]
     chords*: seq[Chord]
-
-const keyCount*: array[HandSetup, int] = [5, 5, 10]
 
 func `$`*(key: OutKey): string =
   if key.isSpecial:
@@ -78,6 +81,11 @@ func `==`*(a, b: OutKey): bool {.inline.} =
 func isUndefined*(key: OutKey): bool {.inline.} =
   not key.isSpecial and key.c == char(0)
 
+func keyCount*(setup: HandSetup): int =
+  result = 4 + setup.thumbKeys
+  if setup.kind == bothHands:
+    result *= 2
+
 proc parseLayout*(content: string): Option[Layout] =
   try: return some(content.fromJson(Layout))
   except JsonError as e:
@@ -103,7 +111,13 @@ proc registerKeyHandler*(cb: proc(key: OutKey)): auto =
 
 
 proc drawKey*(pressed = false, onClick: EventHandler = nil): VNode =
-  result = buildHtml(tdiv(class = "key " & (if pressed: "pressed" else: "disabled"))):
+  result = buildHtml(tdiv(
+    class = "key " & (
+      if pressed: "pressed"
+      elif onClick == nil: "disabled noclick"
+      else: "disabled"
+    )
+  )):
     tdiv()
   if onClick != nil:
     result.addEventHandler(EventKind.onClick, onClick)
@@ -130,18 +144,34 @@ proc drawKey*(key: OutKey, cb: proc(key: OutKey)): VNode =
   drawKeyWithCb($key, "labeled", cb)
 
 proc drawHands*(
-  handSetup: HandSetup,
+  setup: HandSetup,
   isSmall: bool,
   drawKey: proc(id: InKeyId): VNode
 ): VNode =
-  proc drawHand(hand: HandSetup, offset: InKeyId): VNode =
-    buildHtml(tdiv(class = kstring ("hand " & $hand).addClassIf(isSmall, "small"))):
-      for id in offset .. offset+4:
-        drawKey(id)
-  case handSetup
+  type FingerKind = enum thumb, smallfinger, other=""
+  let leftHandFingers =
+    smallfinger &
+    repeat(other, 3) &
+    repeat(thumb, setup.thumbKeys)
+
+  proc drawHand(hand: HandSetupKind, offset = 0): VNode =
+    buildHtml(tdiv(
+      class = ("hand " & $hand).addClassIf(isSmall, "small").kstring
+    )):
+      for i, finger in (
+        if hand == leftHand: leftHandFingers
+        else: reversed(leftHandFingers)
+      ):
+        let n = drawKey(InKeyId(i + offset))
+        n.class = 
+          if n.class == nil: $finger
+          else: &"{n.class} {finger}"
+        n
+
+  case setup.kind
   of bothHands:
     buildHtml(tdiv(class = "hands")):
-      drawHand(leftHand, 0)
-      drawHand(rightHand, 5)
+      drawHand(leftHand)
+      drawHand(rightHand, 4 + setup.thumbKeys)
   else:
-    drawHand(handSetup, 0)
+    drawHand(setup.kind)
