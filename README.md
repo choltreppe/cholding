@@ -1,6 +1,6 @@
 ## Cholding
 
-`Cholding` is a browser app for creating/editing layouts for chorded keyboards.  
+`Cholding` is a web app for creating/editing layouts for chorded keyboards.  
 The created layouts can be turned into arduino code.  
 Cholding also includes a typing trainer to practice typing with any custom layout.
 
@@ -9,6 +9,8 @@ Cholding also includes a typing trainer to practice typing with any custom layou
 [here](https://chol.foo/cholding)
 
 ### build yourself
+
+You can build the project yourself and just open `build/index.html` in your browser
 
 To build cholding need the [nim compiler](https://nim-lang.org/install.html)  
 and some package:
