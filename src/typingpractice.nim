@@ -126,10 +126,16 @@ proc loadLesson(id: int) =
 proc drawDom*: VNode =
   if not self.isOpen:
     drawPage:
-      tdiv(class = "main-menu"):
+      tdiv(id = "typing-practice-main-menu"):
         button:
           text "open layout"
           proc onClick = openLayout()
+        tdiv(class = "info-box"):
+          text "if you haven't created a layout with the layout editor yet,"
+          br()
+          text "you should do that first"
+          a(class = "button", href = "layouteditor.html", target = "_blank"):
+            text "create layout"
 
   else:
     drawPage do:

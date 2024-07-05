@@ -201,7 +201,7 @@ proc drawDom*: VNode =
       case self.view.stage
       of handSetupSelect:
         if not self.view.kindSelected:
-          buildHtml(tdiv(class = "main-menu")):
+          buildHtml(tdiv(class = "main-menu secondary")):
             for kind in HandSetupKind:
               capture(kind, buildHtml(button) do:
                 text $kind & " hand" & (if kind == bothHands: "s" else: "")
@@ -320,8 +320,8 @@ proc drawDom*: VNode =
                     self.view.pins[id].name = strip($n.value)
                     self.view.errorPinNames = @[]
                     setCookie("pins", self.view.pins.toJson)
-                tdiv(class = "pull-resistor"):
-                  for level in VoltageLevel:
+                tdiv(class = "connected-to-level"):
+                  for level in [voltageHigh, voltageLow]:
                     if level == self.view.pins[id].connectedTo:
                       button(class = "small selected"): text $level
                     else:

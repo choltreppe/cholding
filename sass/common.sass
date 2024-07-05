@@ -192,7 +192,7 @@ a, a:visited
 
 // -------- widgets --------
 
-button
+button, a.button
   border: none
   padding: ($font-size-medium*0.6) ($font-size-medium*1.2)
   border-radius: $font-size-medium*0.8
@@ -281,11 +281,13 @@ input[type="text"]
     @extend button
   
   > *
-    background-color: $color-element-subtle
-    color: $color-on-ground
     font-size: $font-size-big
     @each $side in [left, right]
       padding-#{$side}: $font-size-big*2
+  
+  &.secondary > *
+    background-color: $color-element-subtle
+    color: $color-on-ground
 
 
 // -------- layout (visualise keys) --
