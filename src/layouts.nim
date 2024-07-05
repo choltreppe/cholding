@@ -114,16 +114,16 @@ proc drawKey*(pressed = false, onClick: EventHandler = nil): VNode =
   result = buildHtml(tdiv(
     class = "key " & (
       if pressed: "pressed"
-      elif onClick == nil: "disabled noclick"
       else: "disabled"
     )
+    .addClassIf(onClick == nil, "noclick")
   )):
     tdiv()
   if onClick != nil:
     result.addEventHandler(EventKind.onClick, onClick)
 
 proc drawKey*(key: string): VNode =
-  buildHtml(tdiv(class = "key labeled")):
+  buildHtml(tdiv(class = "key labeled noclick")):
     tdiv: text key
 
 proc drawKey*(key: OutKey): VNode =

@@ -264,7 +264,9 @@ proc drawDom*: VNode =
               let errInKeys = card(chord.inKeys) == 0 or chord.inKeys in dupInKeys
               let errOutKey = chord.outKey.isUndefined or chord.outKey in dupOutKeys
               capture(i, buildHtml(tdiv(
-                class = "chord".addClassIf(i < high(self.layout.chords), ""
+                class = "chord".addClassIf(
+                  not self.view.justAddedChord or i < high(self.layout.chords),
+                  ""
                   .addClassIf(errInKeys, "error-in-keys")
                   .addClassIf(errOutKey, "error-out-key")
                 )
@@ -386,11 +388,11 @@ setRouter do(route: string):
     of chordConfig:
       if len(self.layout.chords) == 0:
         self.layout.chords.setLen 1
+        self.view.justAddedChord = true
       block:
         let keys = self.layout.basicKeys.keys.toSet
         for chord in self.layout.chords.mitems:
           chord.inKeys.excl keys
-      self.view.justAddedChord = true
 
     of pinConfig:
       if Some(@pins) ?= getCookie("pins"):
