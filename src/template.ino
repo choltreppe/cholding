@@ -12,11 +12,10 @@ const t_keys chord_mask = $chord_mask;
 char chords[1 << KEY_COUNT] = {0};
 
 
-#define DEBOUNCE_DELAY 60
+#define DEBOUNCE_DELAY 30
+#define CHORD_TIMEOUT 90
 
-t_keys keys_pressed = 0;  // bit array 
-char prev_modifier = 0;  // for implementing modifier release on doublepress (0 if released)
-bool chord_started = false;
+t_keys keys_pressed = 0;  // bit array
 
 bool get_key(int id) {
   return bitRead(keys_pressed, id);
@@ -51,7 +50,11 @@ void setup() {
 }
 
 void loop() {
+  char prev_modifier = 0;  // for implementing modifier release on doublepress (0 if released)
+  unsigned long int last_chord_time = 0;
+  bool chord_started = false;
   while(true) {
+    const bool chord_may_start = millis() - last_chord_time > CHORD_TIMEOUT;
     for(int i = 0; i < KEY_COUNT; ++i) {
       bool was_pressed = get_key(i);
       bool is_pressed = digitalRead(key_pins[i]) == key_levels[i];
@@ -59,13 +62,15 @@ void loop() {
       if(!was_pressed and is_pressed) {
         if(basic_key > 0)
           Keyboard.press(basic_key);
-        chord_started = true;
+        else if(chord_may_start)
+          chord_started = true;
       }
       else if(was_pressed and not is_pressed) {
         if(basic_key > 0)
           Keyboard.release(basic_key);
         else if(chord_started) {
           chord_started = false;
+          last_chord_time = millis();
           t_keys chord = keys_pressed & chord_mask;
           char key_code = chords[chord];
           if(key_code > 0) {
