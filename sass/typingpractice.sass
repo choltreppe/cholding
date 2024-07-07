@@ -34,44 +34,12 @@
   @include recolor($color-on-ground)
   &:hover
     cursor: pointer
-
-  
-.practice-text
-  align-self: center
-  display: flex
-  flex-direction: column
-  align-items: center
-
-  > .text
-    max-width: 75vmax
-    align-self: stretch
-    display: flex
-    flex-wrap: wrap
-    align-items: stretch
-    margin-bottom: 16vh
-
-    > *
-      display: flex
-
-      > .symbol
-        font-size: 3vmin
-        padding: 0.3vmin 0.5vmin
-        margin-bottom: 0.3vmin
-        margin-right: 2px
-        border-bottom: solid 0.3vmin transparent
-        
-        &.cursor
-          border-color: $color-element-strong
-          background-color: $color-element-subtle
-
-        &.failed
-          background-color: $color-error-ground
-
+    
 #typing-practice-select
   width: 80%
   display: flex
+  align-items: stretch
   flex-wrap: wrap
-  align-items: flex-start
 
   > div
     display: flex
@@ -92,6 +60,38 @@
 
     > .hand
       margin: 0 !important
+
+.practice-text
+  align-self: center
+  display: flex
+  flex-direction: column
+  align-items: center
+
+  > .text
+    max-width: 75vmax
+    align-self: stretch
+    display: flex
+    flex-wrap: wrap
+    align-items: stretch
+    margin-bottom: 16vh
+
+    > *
+      display: flex
+      flex-wrap: wrap
+
+      > .symbol
+        font-size: 3vmin
+        padding: 0.3vmin 0.5vmin
+        margin-bottom: 0.3vmin
+        margin-right: 2px
+        border-bottom: solid 0.3vmin transparent
+        
+        &.cursor
+          border-color: $color-element-strong
+          background-color: $color-element-subtle
+
+        &.failed
+          background-color: $color-error-ground
 
 #lesson-stats
   align-self: center

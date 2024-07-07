@@ -14,10 +14,12 @@ import ./utils, ./widgets, ./layouts
 
 
 const
-  symbolOrder = "eariotnslcudpmhgbfywkvxzjq".utf8.toSeq
+  letterOrder = "eariotnslcudpmhgbfywkvxzjq".utf8.toSeq
+  words = static(staticRead("words.txt").split('\n'))
   newSymbolsPerLesson = 2
   wordsPerText = 16
-  lettersPerWord = 2 .. 8
+  lettersPerWord = 2 .. 7
+  specialLessonSymbols = 128
 
 
 type
@@ -26,12 +28,13 @@ type
   LessonKind = enum
     practiceJust="just",
     practiceUpto="upto",
-    practiceNumbers="numbers"
+    practiceSpecial
 
   LessonConfig = object
     symbols: seq[string]
     case kind: LessonKind
     of practiceUpto: newSymbols: seq[string]
+    of practiceSpecial: title: string
     else: discard
 
   TypingPracticeViewKind = enum lessonSelect, lesson, lessonStats
@@ -72,28 +75,43 @@ func getLessonConfigs(keyLookup: KeyLookup): seq[LessonConfig] =
   let oneKeySymbols = collect:
     for s, k in keyLookup:
       if len(k) == 1: s
-  let symbols =
-    symbolOrder.filterIt(it in oneKeySymbols) &
-    symbolOrder.filterIt(it in keyLookup and it notin oneKeySymbols)
+  let letters =
+    letterOrder.filterIt(it in oneKeySymbols) &
+    letterOrder.filterIt(it in keyLookup and it notin oneKeySymbols)
   var i = 0
-  while i < len(symbols):
-    let upto = min(i + newSymbolsPerLesson, len(symbols))
+  while i < len(letters):
+    let upto = min(i + newSymbolsPerLesson, len(letters))
     result &= LessonConfig(
       kind: practiceJust,
-      symbols: symbols[i ..< upto]
+      symbols: letters[i ..< upto]
     )
     if i > 0:
       result &= LessonConfig(
         kind: practiceUpto,
-        symbols: symbols[0 ..< upto],
-        newSymbols: symbols[i ..< upto]
+        symbols: letters[0 ..< upto],
+        newSymbols: letters[i ..< upto]
       )
     i += newSymbolsPerLesson
-  const numbers = "1234567890"
-  result &= LessonConfig(
-    kind: practiceNumbers,
-    symbols: numbers.mapIt($it).filterIt(it in keyLookup)
-  )
+
+  const numbers = "1234567890".map do(it: char) -> string: $it
+  let coveredNumbers = numbers.filterIt(it in keyLookup)
+  if len(coveredNumbers) > 0:
+    result &= LessonConfig(
+      kind: practiceSpecial,
+      title: "numbers",
+      symbols: coveredNumbers
+    )
+
+  let otherSymbols = collect:
+    for symbol in keyLookup.keys:
+      if symbol notin numbers & letters & " ":
+        symbol
+  if len(otherSymbols) > 0:
+    result &= LessonConfig(
+      kind: practiceSpecial,
+      title: "special symbols",
+      symbols: otherSymbols
+    )
 
 proc openLayout =
   uploadFile do(content: string):
@@ -113,15 +131,30 @@ proc gotoLesson(id: int) =
 proc loadLesson(id: int) =
   let config = self.lessons[id]
   self.view = TypingPracticeView(kind: lesson, id: id)
-  for i in 0 ..< wordsPerText:
-    if i > 0:
-      if "," in self.keyLookup and rand(6) == 0:
-        self.view.text &= ','
-      self.view.text &= ' '
-    for _ in 0 ..< rand(lettersPerWord):
+  if config.kind == practiceSpecial:
+    for _ in 0 ..< specialLessonSymbols:
       self.view.text &= sample(config.symbols)
-  if "." in self.keyLookup:
-    self.view.text &= '.'
+  else:
+    let words = words.filterIt(it.allIt($it in config.symbols))
+    let realWordProb =
+      if len(words) == 0: 0.0
+      elif len(words) < 10: 0.06
+      elif len(words) < 40: 0.3
+      else: 0.6
+    debugEcho realWordProb
+    for i in 0 ..< wordsPerText:
+      if i > 0:
+        if "," in self.keyLookup and randProb(0.16):
+          self.view.text &= ','
+        self.view.text &= ' '
+      if randProb(realWordProb):
+        debugEcho "word"
+        self.view.text &= sample(words)
+      else:
+        for _ in 0 ..< rand(lettersPerWord):
+          self.view.text &= sample(config.symbols)
+    if "." in self.keyLookup:
+      self.view.text &= '.'
 
 proc drawDom*: VNode =
   if not self.isOpen:
@@ -158,8 +191,9 @@ proc drawDom*: VNode =
             capture(i, buildHtml(tdiv) do:
               proc onClick = gotoLesson(i)
               tdiv(class = "title"):
-                text $config.kind
-              if config.kind in [practiceJust, practiceUpto]:
+                text if config.kind == practiceSpecial: config.title
+                     else: $config.kind
+              if config.kind != practiceSpecial:
                 tdiv(class = "hand"):
                   for symbol in (if config.kind == practiceUpto: config.newSymbols else: config.symbols):
                     drawKey(symbol)

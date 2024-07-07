@@ -1,4 +1,4 @@
-import std/[dom, tables, strutils, strformat, options]
+import std/[dom, tables, strutils, strformat, options, random]
 import fusion/matching
 import karax/karax
 import jsony
@@ -101,3 +101,11 @@ func duplicates*[T](things: openarray[T]): seq[T] =
 func addClassIf*(base: string, cond: bool, name: string): string =
   result = base
   if cond: result &= " " & name
+
+
+proc randProb*(prob: float): bool =
+  assert prob in 0.0 .. 1.0
+  case prob
+  of 0: false
+  of 1: true
+  else: rand(int 1/prob) == 0
